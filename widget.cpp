@@ -234,6 +234,8 @@ void Widget::startClicked()
         startStopAction->setText("S&tart");
         return;
     }
+    if (pic.isNull())
+        return;
     running=true;
     ui->btnStart->setText("Stop");
     startStopAction->setText("S&top");
