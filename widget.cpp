@@ -217,7 +217,7 @@ Poly Widget::genPoly()
     {
         quint16 x,y;
         x = qrand()%(int)(width*(((float)FOCUS_RIGHT-FOCUS_LEFT)/100)) + (width*(float)FOCUS_LEFT/100);
-        y = qrand()%(int)(height*(((float)FOCUS_BOTTOM-FOCUS_TOP)/100)) + (width*(float)FOCUS_TOP/100);
+        y = qrand()%(int)(height*(((float)FOCUS_BOTTOM-FOCUS_TOP)/100)) + (height*(float)FOCUS_TOP/100);
         poly.points.append(QPoint(x,y));
     }
 #if GEN_WITH_RANDOM_COLOR
