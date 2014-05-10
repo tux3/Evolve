@@ -6,6 +6,13 @@ QApplication* app;
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    QCoreApplication::setApplicationName("Evolve");
+    QCoreApplication::setApplicationVersion("1.2");
+    QCommandLineParser parser;
+    parser.setApplicationDescription(QCoreApplication::translate("main","Polygon image evolver"));
+    parser.addPositionalArgument("filename", QCoreApplication::translate("main", "Image file to imitate."));
+    parser.addHelpOption();
+    parser.addVersionOption();
     app = &a;
     Widget w;
     w.show();
