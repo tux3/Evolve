@@ -15,14 +15,17 @@ TEMPLATE = app
 SOURCES += main.cpp\
         widget.cpp \
     poly.cpp \
-    progressdialog.cpp
+    progressdialog.cpp \
+    settingswidget.cpp
 
 HEADERS  += widget.h \
     poly.h \
-    progressdialog.h
+    progressdialog.h \
+    settingswidget.h
 
 FORMS    += widget.ui \
-    progressdialog.ui
+    progressdialog.ui \
+    settingswidget.ui
 
 CONFIG += c++11
 
