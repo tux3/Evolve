@@ -1,3 +1,6 @@
+# Qt creator files
+*.pro.user*
+
 #################
 ## Eclipse
 #################
