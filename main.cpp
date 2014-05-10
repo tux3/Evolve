@@ -30,4 +30,11 @@ int main(int argc, char *argv[])
  * Crash on clicking start on Debian
  * "Illegal instruction". What the fuck ?
  *
+ * After a limit of poly is reached (set in settings) maybe add a virtual fitness penalty to new polys
+ * Prefer modifying existing polys instead.
+ *
+ * We need command line control. For science.
+ *
+ * Maybe the idea of autofocus isn't that bad. Compute the fitness for 100 chunks, and focus on each. Then focus on the borders to fix them
+ *
  */

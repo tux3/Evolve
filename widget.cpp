@@ -76,27 +76,32 @@ int Widget::computeFitness(QImage& target, QRect box)
         maxy = miny + box.height();
     }
 
+    QVector<QRgb*> targetLines;
+    QVector<QRgb*> originalLines;
+    for (unsigned i=miny; i<maxy; i++)
+        originalLines.append((QRgb*)pic.scanLine(i));
+    for (unsigned i=miny; i<maxy; i++)
+        targetLines.append((QRgb*)target.scanLine(i));
+
     auto computeSlice = [&](unsigned start, unsigned end)
     {
-        for (unsigned i=start; i<end; i++)
+        for (unsigned i=0; i<end-start; i++)
         {
-            QRgb* targetLine = (QRgb*)target.scanLine(i);
-            QRgb* originalLine = (QRgb*)pic.scanLine(i);
             // Sum of the differences of each pixel's color
             for (unsigned j=minx; j<maxx; j++)
             {
                 int tR,tG,tB;
                 int oR,oG,oB;
-                QColor(targetLine[j]).getRgb(&tR,&tG,&tB);
-                QColor(originalLine[j]).getRgb(&oR,&oG,&oB);
+                QColor(targetLines.at(i)[j]).getRgb(&tR,&tG,&tB);
+                QColor(originalLines.at(i)[j]).getRgb(&oR,&oG,&oB);
                 unsigned diff = abs(tR-oR)+abs(tG-oG)+abs(tB-oB);
                 fitness.fetchAndAddRelaxed(diff);
             }
         }
     };
-    //QFuture<void> firstSlice = QtConcurrent::run(computeSlice, miny, maxy/2);
-    computeSlice(0, maxy);
-    //firstSlice.waitForFinished();
+    QFuture<void> firstSlice = QtConcurrent::run(computeSlice, miny, maxy/2);
+    computeSlice(maxy/2, maxy);
+    firstSlice.waitForFinished();
 
     return fitness.load();
 }
