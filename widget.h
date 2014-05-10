@@ -8,10 +8,6 @@
 
 #include "poly.h"
 
-// Number of points of a polygon
-#define N_POLY_POINTS 3
-// Variation of color when optimizing. Lower if slower but better
-#define N_COLOR_VAR 5
 
 extern QApplication* app;
 
