@@ -43,7 +43,7 @@ Widget::Widget() :
     QMenu* settingsMenu = menuBar->addMenu(tr("&Settings"));
     settingsMenu->addAction("&Settings", this, SLOT(settingsClicked()));
     ui->gridLayout->addWidget(menuBar,0,0,1,4);
-    menuBar->setFixedHeight(menuBar->height());
+    menuBar->setFixedHeight(22);
 
     generation = 0;
     running = false;
