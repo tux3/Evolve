@@ -204,10 +204,12 @@ int Widget::computeFitness(QImage& target, QRect box)
 
     auto computeSlice = [&](unsigned start, unsigned end)
     {
+        QRgb* targetLine;
+        QRgb* originalLine;
         for (unsigned i=start; i<end; i++)
         {
-            QRgb* targetLine = (QRgb*)target.scanLine(i);
-            QRgb* originalLine = (QRgb*)pic.scanLine(i);
+            targetLine = (QRgb*)target.scanLine(i);
+            originalLine = (QRgb*)pic.scanLine(i);
             // Sum of the differences of each pixel's color
             for (unsigned j=minx; j<maxx; j++)
             {
@@ -220,10 +222,17 @@ int Widget::computeFitness(QImage& target, QRect box)
             }
         }
     };
-    QFuture<void> firstSlice = QtConcurrent::run(computeSlice, miny, maxy/2);
-    computeSlice(maxy/2, maxy);
-    firstSlice.waitForFinished();
 
+    int i = 0;
+    int cores = 8;
+    QFuture<void> slice[cores];
+    for (i=0; i < cores; i++) {
+        slice[i] = QtConcurrent::run(computeSlice, miny+(maxy/cores) *i, (maxy/cores) * (i+1));
+    }
+
+    for (i=0; i < cores; i++) {
+        slice[i].waitForFinished();
+    }
     return fitness.load();
 }
 
@@ -252,10 +261,13 @@ void Widget::startClicked()
     }
 
     // Main loop
+    Poly poly;
+    QImage newGen;
+    QImage clean;
     while (running /* && polys.size() < N_POLYS */ )
     {
-        Poly poly = genPoly();
-        QImage newGen = generated;
+        poly = genPoly();
+        newGen = generated;
         drawPoly(newGen, poly);
         generation++;
         int newFit = computeFitness(newGen);
@@ -264,8 +276,8 @@ void Widget::startClicked()
             polys.append(poly);
 
             // Optimize colors
-            QImage clean = generated;
-            optimizeColors(clean, polys.last());
+            clean = generated;
+            optimizeColors(clean, polys[polys.length()-1]);
 
             // Update data
             //generated = newGen;
@@ -325,6 +337,7 @@ QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)
     int targetColor; // 0=R, 1=G, 2=B, 3=A
 
     // Add
+
     for (targetColor=0; targetColor <= 8; targetColor++)
     {
         do
