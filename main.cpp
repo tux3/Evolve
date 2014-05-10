@@ -20,7 +20,14 @@ int main(int argc, char *argv[])
  *
  * Make an option to only redraw around a particular poly, in a bounding box around this poly
  *
- * The crash might be because we write to an image while it's trying to render it
- * Careful with writing to variables from other threads
+ * Anon gets a crash when changing the vertex/numpoints count while running.
+ *
+ * We have a crash in computeFitness, at targetLine[j].getRgb
+ * Using a focus on top right corner
+ * Might be due to the threading. QImage is not thread safe (just reentrant)
+ * Yep, probably. Can't reproduce withou the threading.
+ *
+ * Crash on clicking start on Debian
+ * "Illegal instruction". What the fuck ?
  *
  */

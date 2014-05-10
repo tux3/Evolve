@@ -94,9 +94,9 @@ int Widget::computeFitness(QImage& target, QRect box)
             }
         }
     };
-    QFuture<void> firstSlice = QtConcurrent::run(computeSlice, miny, maxy/2);
-    computeSlice(maxy/2, maxy);
-    firstSlice.waitForFinished();
+    //QFuture<void> firstSlice = QtConcurrent::run(computeSlice, miny, maxy/2);
+    computeSlice(0, maxy);
+    //firstSlice.waitForFinished();
 
     return fitness.load();
 }
