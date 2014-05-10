@@ -52,4 +52,8 @@ int main(int argc, char *argv[])
  *
  * Maybe the idea of autofocus isn't that bad. Compute the fitness for 100 chunks, and focus on each. Then focus on the borders to fix them
  *
+ * Okay, we have color optimizations, now we just need to add shape optimization just after the color.
+ * It works like this : You find a suitable place to add a new poly, correct the color to fit the new place's color perfectly
+ * and then reshape the poly to cover that new place perfectly. Or at least cover it as much as we can do reasonably fast.
+ *
  */
