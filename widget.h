@@ -26,6 +26,7 @@ public:
     static void drawPoly(QImage& target, Poly& poly);
     void redraw(QImage& target);
     QColor optimizeColors(QImage& target, Poly& poly, bool redraw=false);
+    void updateGuiFitness();
     ~Widget();
 
 protected:

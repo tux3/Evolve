@@ -92,7 +92,7 @@ void Widget::openImageClicked()
     ui->imgBest->setPixmap(QPixmap::fromImage(generated));
 
     fitness = computeFitness(generated);
-    ui->fitnessLabel->setNum(fitness);
+    updateGuiFitness();
     polys.clear();
     file.close();
 }
@@ -132,7 +132,7 @@ void Widget::importDnaClicked()
 
     redraw(generated);
     fitness  = computeFitness(generated);
-    ui->fitnessLabel->setNum(fitness);
+    updateGuiFitness();
     ui->generationLabel->setNum(generation);
     ui->polysLabel->setNum(polys.size());
     ui->imgBest->setPixmap(QPixmap::fromImage(generated));
@@ -274,7 +274,7 @@ void Widget::startClicked()
             // Update GUI
             ui->imgBest->setPixmap(QPixmap::fromImage(generated));
             ui->polysLabel->setNum(polys.size());
-            ui->fitnessLabel->setNum(fitness);
+            updateGuiFitness();
         }
         ui->generationLabel->setNum(generation);
         app->processEvents();
@@ -315,7 +315,7 @@ QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)
 
             // Update GUI
             ui->imgBest->setPixmap(QPixmap::fromImage(generated));
-            ui->fitnessLabel->setNum(fitness);
+            updateGuiFitness();
             return true;
         }
         else
@@ -394,6 +394,7 @@ void Widget::cleanDnaClicked()
 {
     // Make sure we're the only one touching the polys
     ui->btnStart->setEnabled(false);
+    startStopAction->setEnabled(false);
     ui->btnStart->setText("Start");
     running = false;
     app->processEvents();
@@ -404,6 +405,9 @@ void Widget::cleanDnaClicked()
 
     for (int i=0; i<polys.size();)
     {
+        if (!progress.isVisible())
+            break;
+
         progress.increment();
         app->processEvents();
         // Remove broken polys
@@ -431,7 +435,7 @@ void Widget::cleanDnaClicked()
             fitness = newFit;
             generation++;
             ui->generationLabel->setNum(generation);
-            ui->fitnessLabel->setNum(fitness);
+            updateGuiFitness();
             ui->imgBest->setPixmap(QPixmap::fromImage(generated));
             ui->polysLabel->setNum(polys.size());
             app->processEvents();
@@ -443,20 +447,31 @@ void Widget::cleanDnaClicked()
         }
 
     }
+    startStopAction->setEnabled(true);
     ui->btnStart->setEnabled(true);
 }
 
 void Widget::optimizeDnaClicked()
 {
+    ui->btnStart->setEnabled(false);
+    startStopAction->setEnabled(false);
+    ui->btnStart->setText("Start");
+    running = false;
+
     ProgressDialog progress;
     progress.setMax(polys.size());
     progress.show();
     for (Poly& poly : polys)
     {
+        if (!progress.isVisible())
+            break;
         optimizeColors(generated, poly, true);
         progress.increment();
         app->processEvents();
     }
+
+    startStopAction->setEnabled(true);
+    ui->btnStart->setEnabled(true);
 }
 
 void Widget::settingsClicked()
@@ -465,4 +480,12 @@ void Widget::settingsClicked()
     settingsWidget.show();
     while (settingsWidget.isVisible())
         app->processEvents();
+}
+
+void Widget::updateGuiFitness()
+{
+    int worstFitness = width*height*3*255;
+    float percentFitness = 100.0-((double)fitness/(double)worstFitness*100.0);
+    ui->fitnessLabel->setNum(percentFitness);
+    ui->fitnessLabel->setText(ui->fitnessLabel->text()+'%');
 }
