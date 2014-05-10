@@ -22,11 +22,3 @@ Compiling
 
 This is a standard Qt application, the easiest way to compile it is to download the Qt SKD, open the project with Qt Creator and click Build.
 The Qt SDK is available <a href="http://qt-project.org/downloads">here</a>
-
-On linux, you can also compile it with the following commands:<br/>
-<code>
- sudo apt-get install qt5-qmake qt5-default libqt5svg5 libqt5svg5-dev git</code><br/>
- <code>git clone https://github.com/infoburp/Evolve</code><br/>
- <code>cd Evolve</code><br/>
- <code>./Evolve</code><br/>
-</code>
