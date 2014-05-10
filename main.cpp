@@ -1,5 +1,6 @@
 #include "widget.h"
 #include <QApplication>
+#include <QCommandLineParser>
 
 QApplication* app;
 
