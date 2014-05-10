@@ -202,10 +202,12 @@ int Widget::computeFitness(QImage& target, QRect box)
 
     auto computeSlice = [&](unsigned start, unsigned end)
     {
+        QRgb* targetLine;
+        QRgb* originalLine;
         for (unsigned i=start; i<end; i++)
         {
-            QRgb* targetLine = (QRgb*)target.scanLine(i);
-            QRgb* originalLine = (QRgb*)pic.scanLine(i);
+            targetLine = (QRgb*)target.scanLine(i);
+            originalLine = (QRgb*)pic.scanLine(i);
             // Sum of the differences of each pixel's color
             for (unsigned j=minx; j<maxx; j++)
             {
@@ -234,8 +236,6 @@ void Widget::startClicked()
         startStopAction->setText("S&tart");
         return;
     }
-    if (pic.isNull())
-        return;
     running=true;
     ui->btnStart->setText("Stop");
     startStopAction->setText("S&top");
@@ -250,10 +250,13 @@ void Widget::startClicked()
     }
 
     // Main loop
+    Poly poly;
+    QImage newGen;
+    QImage clean;
     while (running /* && polys.size() < N_POLYS */ )
     {
-        Poly poly = genPoly();
-        QImage newGen = generated;
+        poly = genPoly();
+        newGen = generated;
         drawPoly(newGen, poly);
         generation++;
         int newFit = computeFitness(newGen);
@@ -262,7 +265,7 @@ void Widget::startClicked()
             polys.append(poly);
 
             // Optimize colors
-            QImage clean = generated;
+            clean = generated;
             optimizeColors(clean, polys.last());
 
             // Update data
