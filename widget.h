@@ -41,6 +41,8 @@ private slots:
     void optimizeDnaClicked();
     void startClicked();
     void settingsClicked();
+    void addPoly();
+    void mutatePolys();
     
 private:
     Ui::Widget *ui;

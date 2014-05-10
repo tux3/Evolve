@@ -238,6 +238,7 @@ int Widget::computeFitness(QImage& target, QRect box)
 
 void Widget::startClicked()
 {
+
     if (running)
     {
         running = false;
@@ -261,28 +262,53 @@ void Widget::startClicked()
     }
 
     // Main loop
-    Poly poly;
-    QImage newGen;
     QImage clean;
+    QImage newGen;
+    int r;
+    bool dirty;
     while (running /* && polys.size() < N_POLYS */ )
     {
-        poly = genPoly();
-        newGen = generated;
-        drawPoly(newGen, poly);
-        generation++;
-        int newFit = computeFitness(newGen);
-        if (newFit < fitness)
-        {
-            polys.append(poly);
+        dirty=false;
+        r= qrand() % 100;
+        if (r == 1 && polys.length() > N_MIN_POLYS) {
+            polys.removeAt(qrand() % polys.length());
+            dirty=true;
+        }
+        if (r == 2 && polys.length() > 1 ){
+            int pol1=qrand() % polys.length();
+            int pol2=qrand() % polys.length();
+            Poly temp = polys[pol1];
+            polys[pol1] = polys[pol2];
+            polys[pol2]= temp;
+            dirty=true;
+        }
+        if (r >= 85 && polys.length() < N_MAX_POLYS) {
+            Poly poly;
 
-            // Optimize colors
-            clean = generated;
-            optimizeColors(clean, polys[polys.length()-1]);
+            poly = genPoly();
+            newGen = generated;
+            drawPoly(newGen, poly);
+            generation++;
 
-            // Update data
-            //generated = newGen;
-            fitness = computeFitness(generated);
+            int newFit = computeFitness(newGen);
+            if (newFit < fitness)
+            {
+                polys.append(poly);
+                // Optimize colors
+                clean = generated;
+                optimizeColors(clean, polys[polys.length()-1]);
 
+                // Update data
+                //generated = newGen;
+                fitness = computeFitness(generated);
+            }
+         //dirty=true;
+        }
+        if (r>2 && r<85){
+            mutatePolys();
+        }
+        if (dirty) {
+            redraw(generated);
             // Update GUI
             ui->imgBest->setPixmap(QPixmap::fromImage(generated));
             ui->polysLabel->setNum(polys.size());
@@ -291,6 +317,16 @@ void Widget::startClicked()
         ui->generationLabel->setNum(generation);
         app->processEvents();
     }
+}
+void Widget::mutatePolys() {
+    int i;
+    for (i =0; i < polys.length(); i++){
+
+    }
+}
+
+void Widget::addPoly() {
+
 }
 
 QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)

@@ -13,6 +13,8 @@ SettingsWidget::SettingsWidget(QWidget *parent) :
     // Setup values
     ui->colorVarSpin->setValue(N_COLOR_VAR);
     ui->nPointsSpin->setValue(N_POLY_POINTS);
+    ui->minPolySpin->setValue(N_MIN_POLYS);
+    ui->maxPolySpin->setValue(N_MAX_POLYS);
 }
 
 SettingsWidget::~SettingsWidget()
