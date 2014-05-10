@@ -13,8 +13,11 @@ SettingsWidget::SettingsWidget(QWidget *parent) :
     // Setup values
     ui->colorVarSpin->setValue(N_COLOR_VAR);
     ui->nPointsSpin->setValue(N_POLY_POINTS);
-    ui->minPolySpin->setValue(N_MIN_POLYS);
-    ui->maxPolySpin->setValue(N_MAX_POLYS);
+    ui->focusLeft->setValue(FOCUS_LEFT);
+    ui->focusRight->setValue(FOCUS_RIGHT);
+    ui->focusTop->setValue(FOCUS_TOP);
+    ui->focusBottom->setValue(FOCUS_BOTTOM);
+    ui->coreSpin->setValue(N_CORES);
 }
 
 SettingsWidget::~SettingsWidget()
@@ -31,5 +34,10 @@ void SettingsWidget::okClicked()
 {
     N_POLY_POINTS = ui->nPointsSpin->value();
     N_COLOR_VAR = ui->colorVarSpin->value();
+    FOCUS_LEFT = ui->focusLeft->value();
+    FOCUS_RIGHT = ui->focusRight->value();
+    FOCUS_TOP = ui->focusTop->value();
+    FOCUS_BOTTOM = ui->focusBottom->value();
+    N_CORES = ui->coreSpin->value();
     close();
 }

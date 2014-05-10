@@ -17,7 +17,8 @@ SOURCES += main.cpp\
     poly.cpp \
     progressdialog.cpp \
     settingswidget.cpp \
-    settings.cpp
+    settings.cpp \
+    widgetGui.cpp
 
 HEADERS  += widget.h \
     poly.h \
@@ -31,4 +32,5 @@ FORMS    += widget.ui \
 
 CONFIG += c++11
 
-QMAKE_CXXFLAGS_RELEASE += -O3 -march=native
+#QMAKE_CXXFLAGS_RELEASE += -O3 -march=native # Crashes on some computers
+QMAKE_CXXFLAGS_DEBUG += -O0

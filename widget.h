@@ -21,12 +21,14 @@ class Widget : public QWidget
     
 public:
     explicit Widget();
+    ~Widget();
     int computeFitness(QImage& target, QRect box=QRect());
-    static Poly genPoly(); // Creates a new random polygon
+    Poly genPoly(); // Creates a new random polygon
     static void drawPoly(QImage& target, Poly& poly);
     void redraw(QImage& target);
     QColor optimizeColors(QImage& target, Poly& poly, bool redraw=false);
-    ~Widget();
+    void updateGuiFitness();
+    void run(); // Run the vectorizer's main loop
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -41,8 +43,6 @@ private slots:
     void optimizeDnaClicked();
     void startClicked();
     void settingsClicked();
-    void addPoly();
-    void mutatePolys();
     
 private:
     Ui::Widget *ui;

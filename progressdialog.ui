@@ -31,6 +31,9 @@
    <property name="value">
     <number>0</number>
    </property>
+   <property name="format">
+    <string>%p%</string>
+   </property>
   </widget>
   <widget class="QLabel" name="label">
    <property name="geometry">

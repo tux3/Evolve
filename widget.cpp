@@ -1,19 +1,13 @@
 #include "widget.h"
 #include "ui_widget.h"
 #include "progressdialog.h"
-#include "settingswidget.h"
 #include "settings.h"
-#include <QCloseEvent>
 #include <QDataStream>
-#include <QFileDialog>
-#include <QFile>
 #include <QString>
 #include <QPixmap>
 #include <QPen>
 #include <QPainter>
-#include <QMessageBox>
 #include <QRgb>
-#include <QtSvg/QSvgGenerator>
 #include <QtConcurrent/QtConcurrent>
 #include <ctime>
 
@@ -63,126 +57,6 @@ Widget::~Widget()
     exit(0);
 }
 
-void Widget::closeEvent(QCloseEvent *event)
-{
-    running = false;
-    event->accept();
-    exit(0);
-}
-
-void Widget::openImageClicked()
-{
-    QString filename = QFileDialog::getOpenFileName(this,"Open Image","", "Images (*.png *.jpg *.jpeg *.bmp)");
-    QFile file(filename);
-    if (!file.open(QIODevice::ReadOnly))
-        return;
-
-    pic.loadFromData(file.readAll());
-    pic = pic.convertToFormat(QImage::Format_ARGB32);
-    ui->imgOriginal->setPixmap(QPixmap::fromImage(pic));
-
-    // Update our data
-    height = pic.height();
-    width = pic.width();
-
-    // Create a blank pic the size of the original
-    generated = QImage(pic.width(), pic.height(), QImage::Format_ARGB32);
-    generated.fill(QColor(255,255,255));
-    generated = generated.convertToFormat(QImage::Format_ARGB32);
-    ui->imgBest->setPixmap(QPixmap::fromImage(generated));
-
-    fitness = computeFitness(generated);
-    ui->fitnessLabel->setNum(fitness);
-    polys.clear();
-    file.close();
-}
-
-void Widget::saveImageClicked()
-{
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Image"),"",
-                                                    "Images (*.png *.jpg)");
-    if (fileName.isEmpty())
-        return;
-    generated.save(fileName);
-}
-
-void Widget::importDnaClicked()
-{
-    unsigned dnaHeight, dnaWidth;
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Import DNA"),"",
-                                                    "DNA (*.dna)");
-    if (fileName.isEmpty())
-        return;
-    polys.clear();
-    QFile file(fileName);
-    file.open(QIODevice::ReadOnly);
-    QDataStream in(&file);
-    in.setVersion(QDataStream::Qt_4_0);
-    in >> generation;
-    in >> dnaWidth;
-    in >> dnaHeight;
-    in >> polys;
-    file.close();
-
-    if (dnaWidth != width || dnaHeight != height)
-    {
-        QMessageBox::critical(this,"Invalid image","The original image and the DNA have different dimentions");
-        return;
-    }
-
-    redraw(generated);
-    fitness  = computeFitness(generated);
-    ui->fitnessLabel->setNum(fitness);
-    ui->generationLabel->setNum(generation);
-    ui->polysLabel->setNum(polys.size());
-    ui->imgBest->setPixmap(QPixmap::fromImage(generated));
-}
-
-void Widget::exportDnaClicked()
-{
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Export DNA"),"",
-                                                    "DNA (*.dna)");
-    if (fileName.isEmpty())
-        return;
-    QFile file(fileName);
-    file.open(QIODevice::WriteOnly);
-    QDataStream out(&file);
-    out.setVersion(QDataStream::Qt_4_0);
-    out << generation;
-    out << width;
-    out << height;
-    out << polys;
-    file.close();
-}
-
-void Widget::saveSVGClicked()
-{
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Export SVG"),"",
-                                                    "SVG (*.svg)");
-    if (fileName.isEmpty())
-        return;
-    QSvgGenerator generator;
-    generator.setFileName(fileName);
-    //generator.setSize(QSize(width, height));
-    generator.setTitle("Mlkj's Bruteforce Vectorizer");
-
-    QPainter painter;
-    painter.begin(&generator);
-    painter.setRenderHint(QPainter::Antialiasing);
-    painter.setRenderHint(QPainter::SmoothPixmapTransform);
-    painter.setPen(QPen(Qt::NoPen));
-
-    painter.fillRect(0,0,width,height,Qt::white);
-    for (Poly& poly : polys)
-    {
-        QBrush brush(poly.color);
-        brush.setStyle(Qt::SolidPattern);
-        painter.setBrush(brush);
-        painter.drawPolygon(poly.points.data(), poly.points.size());
-    }
-    painter.end();
-}
-
 int Widget::computeFitness(QImage& target, QRect box)
 {
     QAtomicInt fitness = 0;
@@ -202,131 +76,103 @@ int Widget::computeFitness(QImage& target, QRect box)
         maxy = miny + box.height();
     }
 
+    QVector<QRgb*> targetLines;
+    QVector<QRgb*> originalLines;
+    for (unsigned i=miny; i<maxy; i++)
+        originalLines.append((QRgb*)pic.scanLine(i));
+    for (unsigned i=miny; i<maxy; i++)
+        targetLines.append((QRgb*)target.scanLine(i));
+
     auto computeSlice = [&](unsigned start, unsigned end)
     {
-        QRgb* targetLine;
-        QRgb* originalLine;
-        for (unsigned i=start; i<end; i++)
+        for (unsigned i=0; i<end-start; i++)
         {
-            targetLine = (QRgb*)target.scanLine(i);
-            originalLine = (QRgb*)pic.scanLine(i);
             // Sum of the differences of each pixel's color
             for (unsigned j=minx; j<maxx; j++)
             {
                 int tR,tG,tB;
                 int oR,oG,oB;
-                QColor(targetLine[j]).getRgb(&tR,&tG,&tB);
-                QColor(originalLine[j]).getRgb(&oR,&oG,&oB);
+                QColor(targetLines.at(i)[j]).getRgb(&tR,&tG,&tB);
+                QColor(originalLines.at(i)[j]).getRgb(&oR,&oG,&oB);
                 unsigned diff = abs(tR-oR)+abs(tG-oG)+abs(tB-oB);
                 fitness.fetchAndAddRelaxed(diff);
             }
         }
     };
-
-    int i = 0;
-    int cores = 8;
-    QFuture<void> slice[cores];
-    for (i=0; i < cores; i++) {
-        slice[i] = QtConcurrent::run(computeSlice, miny+(maxy/cores) *i, (maxy/cores) * (i+1));
+    QFuture<void> slices[N_CORES];
+    for (int i=0; i < N_CORES; i++){
+        slices[i] = QtConcurrent::run(computeSlice, miny+(maxy/N_CORES) *i, (maxy/N_CORES) * (i+1));
     }
-
-    for (i=0; i < cores; i++) {
-        slice[i].waitForFinished();
+    for (int i=0; i < N_CORES; i++){
+        slices[i].waitForFinished();
     }
     return fitness.load();
 }
 
-void Widget::startClicked()
+void Widget::run()
 {
-
-    if (running)
-    {
-        running = false;
-        ui->btnStart->setText("Start");
-        startStopAction->setText("S&tart");
-        return;
-    }
-    if (pic.isNull())
-        return;
-    running=true;
-    ui->btnStart->setText("Stop");
-    startStopAction->setText("S&top");
-
-    // Gen some initial polys if the pic is empty
-    while (polys.size() < 5)
-    {
-        Poly poly = genPoly();
-        polys.append(poly);
-        QImage clean = generated;
-        optimizeColors(clean, polys.last());
-    }
-
+    int newFit;
     // Main loop
-    QImage clean;
-    QImage newGen;
-    int r;
-    bool dirty;
     while (running /* && polys.size() < N_POLYS */ )
     {
-        dirty=false;
-        r= qrand() % 100;
-        if (r == 1 && polys.length() > N_MIN_POLYS) {
-            polys.removeAt(qrand() % polys.length());
-            dirty=true;
-        }
-        if (r == 2 && polys.length() > 1 ){
-            int pol1=qrand() % polys.length();
-            int pol2=qrand() % polys.length();
-            Poly temp = polys[pol1];
-            polys[pol1] = polys[pol2];
-            polys[pol2]= temp;
-            dirty=true;
-        }
-        if (r >= 85 && polys.length() < N_MAX_POLYS) {
-            Poly poly;
-
-            poly = genPoly();
-            newGen = generated;
-            drawPoly(newGen, poly);
-            generation++;
-
-            int newFit = computeFitness(newGen);
-            if (newFit < fitness)
-            {
-                polys.append(poly);
-                // Optimize colors
-                clean = generated;
-                optimizeColors(clean, polys[polys.length()-1]);
-
-                // Update data
-                //generated = newGen;
-                fitness = computeFitness(generated);
+        Poly poly;
+        QImage newGen = generated;
+        if (polys.length() >= 30){
+            int i = qrand() % polys.length();
+            poly = polys[i];
+            int count = polys[i].points.length();
+            int miny=999, maxy=0, minx=999,maxx=0;
+            for(int j=0;j<count;j++){
+                int curx=polys[i].points[j].x();
+                int cury=polys[i].points[j].y();
+                maxx = max(curx,maxx);
+                maxy = max(cury,maxy);
+                minx = min(curx,minx);
+                miny = min(cury,miny);
+                polys[i].points[j].setX(qrand() % width);
+                polys[i].points[j].setY(qrand() % height);
             }
-         //dirty=true;
+            redraw(newGen);
+            //QRect q (minx,miny,maxx,maxy);
+            newFit = computeFitness(newGen);
+            //int oldFit = computeFitness(generated,q);
+            if (newFit >= fitness) { //why does it keep swapping itself?
+                polys[i]=poly; //undo
+            } else {
+                QImage clean = generated;
+                optimizeColors(clean, poly);
+                fitness = computeFitness(generated);
+                ui->imgBest->setPixmap(QPixmap::fromImage(generated));
+                updateGuiFitness();
+
+            }
         }
-        if (r>2 && r<85){
-            mutatePolys();
-        }
-        if (dirty) {
-            redraw(generated);
+        newGen = generated;
+        poly = genPoly();
+        drawPoly(newGen, poly);
+        generation++;
+        newFit = computeFitness(newGen);
+        if (newFit < fitness)
+        {
+
+            polys.append(poly);
+
+            // Optimize colors
+            QImage clean = generated;
+            optimizeColors(clean, polys.last());
+
+            // Update data
+            //generated = newGen;
+            fitness = computeFitness(generated);
+
             // Update GUI
             ui->imgBest->setPixmap(QPixmap::fromImage(generated));
             ui->polysLabel->setNum(polys.size());
-            ui->fitnessLabel->setNum(fitness);
+            updateGuiFitness();
         }
         ui->generationLabel->setNum(generation);
         app->processEvents();
     }
-}
-void Widget::mutatePolys() {
-    int i;
-    for (i =0; i < polys.length(); i++){
-
-    }
-}
-
-void Widget::addPoly() {
-
 }
 
 QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)
@@ -363,7 +209,7 @@ QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)
 
             // Update GUI
             ui->imgBest->setPixmap(QPixmap::fromImage(generated));
-            ui->fitnessLabel->setNum(fitness);
+            updateGuiFitness();
             return true;
         }
         else
@@ -373,7 +219,6 @@ QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)
     int targetColor; // 0=R, 1=G, 2=B, 3=A
 
     // Add
-
     for (targetColor=0; targetColor <= 8; targetColor++)
     {
         do
@@ -398,7 +243,7 @@ QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)
                 color.setGreen(max(color.green()-N_COLOR_VAR,0)); // Less green
             else if (targetColor == 8)
                 color.setAlpha(max(color.alpha()-N_COLOR_VAR,0)); // Less alpha
-            else if (targetColor == 9)
+            else if (targetColor == 9 && OPT_INCREASE_ALPHA)
                 color.setAlpha(min(color.alpha()+N_COLOR_VAR,255)); // More alpha
             poly.color = color;
         } while (validate());
@@ -410,15 +255,28 @@ QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)
 Poly Widget::genPoly()
 {
     Poly poly;
-    poly.color = QColor::fromRgb(qrand()*qrand()*qrand());
-    poly.color.setAlpha(qrand()%100);
     for (int i=0; i<N_POLY_POINTS; i++)
     {
         quint16 x,y;
-        x = qrand()%width;
-        y = qrand()%height;
+        x = qrand()%(int)(width*(((float)FOCUS_RIGHT-FOCUS_LEFT)/100)) + (width*(float)FOCUS_LEFT/100);
+        y = qrand()%(int)(height*(((float)FOCUS_BOTTOM-FOCUS_TOP)/100)) + (height*(float)FOCUS_TOP/100);
         poly.points.append(QPoint(x,y));
     }
+#if GEN_WITH_RANDOM_COLOR
+    poly.color = QColor::fromRgb(qrand()*qrand()*qrand());
+    poly.color.setAlpha(qrand()%130+20);
+#else
+    quint64 avgx=0, avgy=0;
+    for (QPoint point : poly.points)
+    {
+        avgx += point.x();
+        avgy += point.y();
+    }
+    avgx /= N_POLY_POINTS;
+    avgy /= N_POLY_POINTS;
+    poly.color = pic.pixel(avgx,avgy);
+    poly.color.setAlpha(qrand()%130+20);
+#endif
     return poly;
 }
 
@@ -443,6 +301,7 @@ void Widget::cleanDnaClicked()
 {
     // Make sure we're the only one touching the polys
     ui->btnStart->setEnabled(false);
+    startStopAction->setEnabled(false);
     ui->btnStart->setText("Start");
     running = false;
     app->processEvents();
@@ -453,6 +312,9 @@ void Widget::cleanDnaClicked()
 
     for (int i=0; i<polys.size();)
     {
+        if (!progress.isVisible())
+            break;
+
         progress.increment();
         app->processEvents();
         // Remove broken polys
@@ -480,7 +342,7 @@ void Widget::cleanDnaClicked()
             fitness = newFit;
             generation++;
             ui->generationLabel->setNum(generation);
-            ui->fitnessLabel->setNum(fitness);
+            updateGuiFitness();
             ui->imgBest->setPixmap(QPixmap::fromImage(generated));
             ui->polysLabel->setNum(polys.size());
             app->processEvents();
@@ -492,26 +354,29 @@ void Widget::cleanDnaClicked()
         }
 
     }
+    startStopAction->setEnabled(true);
     ui->btnStart->setEnabled(true);
 }
 
 void Widget::optimizeDnaClicked()
 {
+    ui->btnStart->setEnabled(false);
+    startStopAction->setEnabled(false);
+    ui->btnStart->setText("Start");
+    running = false;
+
     ProgressDialog progress;
     progress.setMax(polys.size());
     progress.show();
     for (Poly& poly : polys)
     {
+        if (!progress.isVisible())
+            break;
         optimizeColors(generated, poly, true);
         progress.increment();
         app->processEvents();
     }
-}
 
-void Widget::settingsClicked()
-{
-    SettingsWidget settingsWidget;
-    settingsWidget.show();
-    while (settingsWidget.isVisible())
-        app->processEvents();
+    startStopAction->setEnabled(true);
+    ui->btnStart->setEnabled(true);
 }

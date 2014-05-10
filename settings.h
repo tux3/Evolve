@@ -3,6 +3,11 @@
 
 extern int N_POLY_POINTS;
 extern int N_COLOR_VAR;
-extern int N_MAX_POLYS;
-extern int N_MIN_POLYS;
+extern int N_CORES;
+
+extern int FOCUS_LEFT, FOCUS_RIGHT, FOCUS_TOP, FOCUS_BOTTOM;
+
+#define GEN_WITH_RANDOM_COLOR false
+#define OPT_INCREASE_ALPHA true
+
 #endif // SETTINGS_H
