@@ -17,7 +17,8 @@ SOURCES += main.cpp\
     poly.cpp \
     progressdialog.cpp \
     settingswidget.cpp \
-    settings.cpp
+    settings.cpp \
+    widgetGui.cpp
 
 HEADERS  += widget.h \
     poly.h \

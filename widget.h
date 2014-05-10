@@ -21,13 +21,14 @@ class Widget : public QWidget
     
 public:
     explicit Widget();
+    ~Widget();
     int computeFitness(QImage& target, QRect box=QRect());
     Poly genPoly(); // Creates a new random polygon
     static void drawPoly(QImage& target, Poly& poly);
     void redraw(QImage& target);
     QColor optimizeColors(QImage& target, Poly& poly, bool redraw=false);
     void updateGuiFitness();
-    ~Widget();
+    void run(); // Run the vectorizer's main loop
 
 protected:
     void closeEvent(QCloseEvent *event);

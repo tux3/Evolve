@@ -1,19 +1,13 @@
 #include "widget.h"
 #include "ui_widget.h"
 #include "progressdialog.h"
-#include "settingswidget.h"
 #include "settings.h"
-#include <QCloseEvent>
 #include <QDataStream>
-#include <QFileDialog>
-#include <QFile>
 #include <QString>
 #include <QPixmap>
 #include <QPen>
 #include <QPainter>
-#include <QMessageBox>
 #include <QRgb>
-#include <QtSvg/QSvgGenerator>
 #include <QtConcurrent/QtConcurrent>
 #include <ctime>
 
@@ -63,126 +57,6 @@ Widget::~Widget()
     exit(0);
 }
 
-void Widget::closeEvent(QCloseEvent *event)
-{
-    running = false;
-    event->accept();
-    exit(0);
-}
-
-void Widget::openImageClicked()
-{
-    QString filename = QFileDialog::getOpenFileName(this,"Open Image","", "Images (*.png *.jpg *.jpeg *.bmp)");
-    QFile file(filename);
-    if (!file.open(QIODevice::ReadOnly))
-        return;
-
-    pic.loadFromData(file.readAll());
-    pic = pic.convertToFormat(QImage::Format_ARGB32);
-    ui->imgOriginal->setPixmap(QPixmap::fromImage(pic));
-
-    // Update our data
-    height = pic.height();
-    width = pic.width();
-
-    // Create a blank pic the size of the original
-    generated = QImage(pic.width(), pic.height(), QImage::Format_ARGB32);
-    generated.fill(QColor(255,255,255));
-    generated = generated.convertToFormat(QImage::Format_ARGB32);
-    ui->imgBest->setPixmap(QPixmap::fromImage(generated));
-
-    fitness = computeFitness(generated);
-    updateGuiFitness();
-    polys.clear();
-    file.close();
-}
-
-void Widget::saveImageClicked()
-{
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Image"),"",
-                                                    "Images (*.png *.jpg)");
-    if (fileName.isEmpty())
-        return;
-    generated.save(fileName);
-}
-
-void Widget::importDnaClicked()
-{
-    unsigned dnaHeight, dnaWidth;
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Import DNA"),"",
-                                                    "DNA (*.dna)");
-    if (fileName.isEmpty())
-        return;
-    polys.clear();
-    QFile file(fileName);
-    file.open(QIODevice::ReadOnly);
-    QDataStream in(&file);
-    in.setVersion(QDataStream::Qt_4_0);
-    in >> generation;
-    in >> dnaWidth;
-    in >> dnaHeight;
-    in >> polys;
-    file.close();
-
-    if (dnaWidth != width || dnaHeight != height)
-    {
-        QMessageBox::critical(this,"Invalid image","The original image and the DNA have different dimentions");
-        return;
-    }
-
-    redraw(generated);
-    fitness  = computeFitness(generated);
-    updateGuiFitness();
-    ui->generationLabel->setNum(generation);
-    ui->polysLabel->setNum(polys.size());
-    ui->imgBest->setPixmap(QPixmap::fromImage(generated));
-}
-
-void Widget::exportDnaClicked()
-{
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Export DNA"),"",
-                                                    "DNA (*.dna)");
-    if (fileName.isEmpty())
-        return;
-    QFile file(fileName);
-    file.open(QIODevice::WriteOnly);
-    QDataStream out(&file);
-    out.setVersion(QDataStream::Qt_4_0);
-    out << generation;
-    out << width;
-    out << height;
-    out << polys;
-    file.close();
-}
-
-void Widget::saveSVGClicked()
-{
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Export SVG"),"",
-                                                    "SVG (*.svg)");
-    if (fileName.isEmpty())
-        return;
-    QSvgGenerator generator;
-    generator.setFileName(fileName);
-    //generator.setSize(QSize(width, height));
-    generator.setTitle("Mlkj's Bruteforce Vectorizer");
-
-    QPainter painter;
-    painter.begin(&generator);
-    painter.setRenderHint(QPainter::Antialiasing);
-    painter.setRenderHint(QPainter::SmoothPixmapTransform);
-    painter.setPen(QPen(Qt::NoPen));
-
-    painter.fillRect(0,0,width,height,Qt::white);
-    for (Poly& poly : polys)
-    {
-        QBrush brush(poly.color);
-        brush.setStyle(Qt::SolidPattern);
-        painter.setBrush(brush);
-        painter.drawPolygon(poly.points.data(), poly.points.size());
-    }
-    painter.end();
-}
-
 int Widget::computeFitness(QImage& target, QRect box)
 {
     QAtomicInt fitness = 0;
@@ -227,30 +101,8 @@ int Widget::computeFitness(QImage& target, QRect box)
     return fitness.load();
 }
 
-void Widget::startClicked()
+void Widget::run()
 {
-    if (running)
-    {
-        running = false;
-        ui->btnStart->setText("Start");
-        startStopAction->setText("S&tart");
-        return;
-    }
-    if (pic.isNull())
-        return;
-    running=true;
-    ui->btnStart->setText("Stop");
-    startStopAction->setText("S&top");
-
-    // Gen some initial polys if the pic is empty
-    while (polys.size() < 5)
-    {
-        Poly poly = genPoly();
-        polys.append(poly);
-        QImage clean = generated;
-        optimizeColors(clean, polys.last());
-    }
-
     // Main loop
     while (running /* && polys.size() < N_POLYS */ )
     {
@@ -364,8 +216,8 @@ Poly Widget::genPoly()
     for (int i=0; i<N_POLY_POINTS; i++)
     {
         quint16 x,y;
-        x = qrand()%width;
-        y = qrand()%height;
+        x = qrand()%(int)(width*(((float)FOCUS_RIGHT-FOCUS_LEFT)/100)) + (width*(float)FOCUS_LEFT/100);
+        y = qrand()%(int)(height*(((float)FOCUS_BOTTOM-FOCUS_TOP)/100)) + (width*(float)FOCUS_TOP/100);
         poly.points.append(QPoint(x,y));
     }
 #if GEN_WITH_RANDOM_COLOR
@@ -485,20 +337,4 @@ void Widget::optimizeDnaClicked()
 
     startStopAction->setEnabled(true);
     ui->btnStart->setEnabled(true);
-}
-
-void Widget::settingsClicked()
-{
-    SettingsWidget settingsWidget;
-    settingsWidget.show();
-    while (settingsWidget.isVisible())
-        app->processEvents();
-}
-
-void Widget::updateGuiFitness()
-{
-    int worstFitness = width*height*3*255;
-    float percentFitness = 100.0-((double)fitness/(double)worstFitness*100.0);
-    ui->fitnessLabel->setNum(percentFitness);
-    ui->fitnessLabel->setText(ui->fitnessLabel->text()+'%');
 }
