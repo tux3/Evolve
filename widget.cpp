@@ -349,7 +349,7 @@ QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)
                 color.setGreen(max(color.green()-N_COLOR_VAR,0)); // Less green
             else if (targetColor == 8)
                 color.setAlpha(max(color.alpha()-N_COLOR_VAR,0)); // Less alpha
-            else if (targetColor == 9)
+            else if (targetColor == 9 && OPT_INCREASE_ALPHA)
                 color.setAlpha(min(color.alpha()+N_COLOR_VAR,255)); // More alpha
             poly.color = color;
         } while (validate());
@@ -361,8 +361,6 @@ QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)
 Poly Widget::genPoly()
 {
     Poly poly;
-    poly.color = QColor::fromRgb(qrand()*qrand()*qrand());
-    poly.color.setAlpha(qrand()%100);
     for (int i=0; i<N_POLY_POINTS; i++)
     {
         quint16 x,y;
@@ -370,6 +368,21 @@ Poly Widget::genPoly()
         y = qrand()%height;
         poly.points.append(QPoint(x,y));
     }
+#if GEN_WITH_RANDOM_COLOR
+    poly.color = QColor::fromRgb(qrand()*qrand()*qrand());
+    poly.color.setAlpha(qrand()%130+20);
+#else
+    quint64 avgx=0, avgy=0;
+    for (QPoint point : poly.points)
+    {
+        avgx += point.x();
+        avgy += point.y();
+    }
+    avgx /= N_POLY_POINTS;
+    avgy /= N_POLY_POINTS;
+    poly.color = pic.pixel(avgx,avgy);
+    poly.color.setAlpha(qrand()%130+20);
+#endif
     return poly;
 }
 

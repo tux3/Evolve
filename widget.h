@@ -22,7 +22,7 @@ class Widget : public QWidget
 public:
     explicit Widget();
     int computeFitness(QImage& target, QRect box=QRect());
-    static Poly genPoly(); // Creates a new random polygon
+    Poly genPoly(); // Creates a new random polygon
     static void drawPoly(QImage& target, Poly& poly);
     void redraw(QImage& target);
     QColor optimizeColors(QImage& target, Poly& poly, bool redraw=false);
