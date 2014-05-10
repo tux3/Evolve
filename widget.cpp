@@ -1,6 +1,8 @@
 #include "widget.h"
 #include "ui_widget.h"
 #include "progressdialog.h"
+#include "settingswidget.h"
+#include "settings.h"
 #include <QCloseEvent>
 #include <QDataStream>
 #include <QFileDialog>
@@ -459,5 +461,8 @@ void Widget::optimizeDnaClicked()
 
 void Widget::settingsClicked()
 {
-
+    SettingsWidget settingsWidget;
+    settingsWidget.show();
+    while (settingsWidget.isVisible())
+        app->processEvents();
 }

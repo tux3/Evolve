@@ -16,12 +16,14 @@ SOURCES += main.cpp\
         widget.cpp \
     poly.cpp \
     progressdialog.cpp \
-    settingswidget.cpp
+    settingswidget.cpp \
+    settings.cpp
 
 HEADERS  += widget.h \
     poly.h \
     progressdialog.h \
-    settingswidget.h
+    settingswidget.h \
+    settings.h
 
 FORMS    += widget.ui \
     progressdialog.ui \
