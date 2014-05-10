@@ -222,10 +222,17 @@ int Widget::computeFitness(QImage& target, QRect box)
             }
         }
     };
-    QFuture<void> firstSlice = QtConcurrent::run(computeSlice, miny, maxy/2);
-    computeSlice(maxy/2, maxy);
-    firstSlice.waitForFinished();
 
+    int i = 0;
+    int cores = 8;
+    QFuture<void> slice[cores];
+    for (i=0; i < cores; i++) {
+        slice[i] = QtConcurrent::run(computeSlice, miny+(maxy/cores) *i, (maxy/cores) * (i+1));
+    }
+
+    for (i=0; i < cores; i++) {
+        slice[i].waitForFinished();
+    }
     return fitness.load();
 }
 
@@ -270,7 +277,7 @@ void Widget::startClicked()
 
             // Optimize colors
             clean = generated;
-            optimizeColors(clean, polys.last());
+            optimizeColors(clean, polys[polys.length()-1]);
 
             // Update data
             //generated = newGen;
@@ -330,6 +337,7 @@ QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)
     int targetColor; // 0=R, 1=G, 2=B, 3=A
 
     // Add
+
     for (targetColor=0; targetColor <= 8; targetColor++)
     {
         do
