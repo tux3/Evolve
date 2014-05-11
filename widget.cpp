@@ -39,7 +39,8 @@ Widget::Widget() :
     QMenu* settingsMenu = menuBar->addMenu(tr("&Settings"));
     settingsMenu->addAction("&Settings", this, SLOT(settingsClicked()));
     QMenu* helpMenu = menuBar->addMenu(tr("&?"));
-    helpMenu->addAction("GitHub page", this, SLOT(githubClicked()));
+    helpMenu->addAction("&Focus", this, SLOT(focusClicked()));
+    helpMenu->addAction("&GitHub page", this, SLOT(githubClicked()));
     ui->gridLayout->addWidget(menuBar,0,0,1,4);
     menuBar->setFixedHeight(22);
 
@@ -48,6 +49,8 @@ Widget::Widget() :
 
     connect(ui->btnOpen, SIGNAL(clicked()), this, SLOT(openImageClicked()));
     connect(ui->btnStart, SIGNAL(clicked()), this, SLOT(startClicked()));
+
+    ui->imgOriginal->installEventFilter(this);
 
     qsrand(time(NULL));
 }

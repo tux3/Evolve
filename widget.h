@@ -31,6 +31,7 @@ public:
     void run(); // Run the vectorizer's main loop
     void setRunningGui();
     void setStoppedGui();
+    bool virtual eventFilter(QObject *object, QEvent *event);
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -46,6 +47,7 @@ private slots:
     void startClicked();
     void settingsClicked();
     void githubClicked();
+    void focusClicked();
     
 private:
     Ui::Widget *ui;

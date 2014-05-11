@@ -1,6 +1,7 @@
 #include "widget.h"
 #include "ui_widget.h"
 #include "settingswidget.h"
+#include "settings.h"
 #include <QMessageBox>
 #include <QCloseEvent>
 #include <QFileDialog>
@@ -9,6 +10,9 @@
 #include <QPainter>
 #include <QThreadPool>
 #include <QDebug>
+#include <QMouseEvent>
+
+using namespace std;
 
 void Widget::closeEvent(QCloseEvent *event)
 {
@@ -192,4 +196,72 @@ void Widget::setStoppedGui()
     openAction->setEnabled(true);
     cleanAction->setEnabled(true);
     optimizeAction->setEnabled(true);
+}
+
+void Widget::focusClicked()
+{
+    QMessageBox::information(this, "Focus",
+    "Draw a rectangle on the original image to focus on it.\nRight click to cancel.");
+}
+
+bool Widget::eventFilter(QObject *object, QEvent *event)
+{
+    static bool pressed = false; // Is the left mouse button pressed
+    static QPoint startCoords;
+    if (object == ui->imgOriginal && event->type() == QEvent::MouseButtonPress)
+    {
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+        if (mouseEvent->button() == Qt::LeftButton)
+        {
+            //QMessageBox::information(this, "Focus", "Clicked");
+            pressed = true;
+            startCoords = mouseEvent->pos();
+        }
+        else if (mouseEvent->button() == Qt::RightButton)
+        {
+            ui->imgOriginal->setPixmap(QPixmap::fromImage(pic));
+            FOCUS_LEFT = FOCUS_TOP = 0;
+            FOCUS_RIGHT = FOCUS_BOTTOM = 100;
+        }
+    }
+    else if (object == ui->imgOriginal && event->type() == QEvent::MouseButtonRelease)
+    {
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+        if (mouseEvent->button() == Qt::LeftButton)
+            pressed = false;
+    }
+    else if (pressed && object == ui->imgOriginal && event->type() == QEvent::MouseMove)
+    {
+        // Draw the focus rect
+        QPixmap newpic = QPixmap::fromImage(pic);
+        newpic = newpic.scaled(ui->imgOriginal->size());
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+        QPoint endCoords = mouseEvent->pos();
+        endCoords.setX(max(min(endCoords.x(), newpic.width()),0));
+        endCoords.setY(max(min(endCoords.y(), newpic.height()),0));
+        QPainter paint;
+        paint.begin(&newpic);
+        QPen pen(Qt::SolidLine);
+        pen.setWidth(3);
+        pen.setColor(QColor(200,0,0,150));
+        paint.setPen(pen);
+        paint.drawRect(QRect(startCoords, endCoords));
+        paint.end();
+        ui->imgOriginal->setPixmap(newpic);
+
+        // Set the focus coords
+        FOCUS_LEFT = startCoords.x()*100/newpic.width();
+        FOCUS_RIGHT = endCoords.x()*100/newpic.width();
+        FOCUS_TOP = startCoords.y()*100/newpic.height();
+        FOCUS_BOTTOM = endCoords.y()*100/newpic.height();
+        if (FOCUS_LEFT == 100)
+            FOCUS_LEFT = 99;
+        if (FOCUS_TOP == 100)
+            FOCUS_TOP = 99;
+        if (FOCUS_RIGHT <= FOCUS_LEFT)
+            FOCUS_RIGHT = FOCUS_LEFT+1;
+        if (FOCUS_BOTTOM <= FOCUS_TOP)
+            FOCUS_BOTTOM = FOCUS_TOP+1;
+    }
+    return false;
 }
