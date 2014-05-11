@@ -55,4 +55,9 @@ int main(int argc, char *argv[])
  * It works like this : You find a suitable place to add a new poly, correct the color to fit the new place's color perfectly
  * and then reshape the poly to cover that new place perfectly. Or at least cover it as much as we can do reasonably fast.
  *
+ * Here's a silly idea, when we add polys, we could sort them in 5 piles :
+ * Covers the whole image, or covers only one of the 4 corner.
+ * Then when redrawing the full image, we can separate into 4 threads.
+ * They each draw their own pile + the common pile, and at the end you stitch the 4 drawn corner in the full pic.
+ *
  */

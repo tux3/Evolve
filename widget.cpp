@@ -9,6 +9,7 @@
 #include <QPainter>
 #include <QRgb>
 #include <QtConcurrent/QtConcurrent>
+#include <QInputDialog>
 #include <ctime>
 
 unsigned Widget::height;
@@ -116,7 +117,7 @@ void Widget::run()
     // Main loop
     while (running)
     {
-        if (polys.size() > 25 && qrand()%3 == 0)
+        if (polys.size() > 10 && SHAPE_OPT_FREQ != 0 && qrand()%SHAPE_OPT_FREQ == 0)
         {
             int i = qrand()%polys.size();
             optimizeShape(generated, polys[i], true);
@@ -131,16 +132,14 @@ void Widget::run()
             int newFit = computeFitness(newGen);
             if (newFit < fitness)
             {
+                // Update data
                 polys.append(poly);
-
-                // Optimize colors
                 QImage clean = generated;
                 generated = newGen;
+
+                // Optimize
                 optimizeColors(clean, polys.last());
                 optimizeShape(clean, polys.last());
-
-                // Update data
-                //generated = newGen;
                 fitness = computeFitness(generated);
 
                 // Update GUI
@@ -342,6 +341,20 @@ void Widget::cleanDnaClicked()
     running = false;
     app->processEvents();
 
+    bool ok;
+    double thresholdPercent = QInputDialog::getDouble(this, "Clean DNA",
+                                       "Fitness threshold", 0.0001, 0, 100, 5, &ok);
+    unsigned worstFitness = width*height*3*255;
+    unsigned fitnessThreshold = thresholdPercent*((double)worstFitness)/100.0;
+
+    if (!ok)
+    {
+        setStoppedGui();
+        startStopAction->setEnabled(true);
+        ui->btnStart->setEnabled(true);
+        return;
+    }
+
     ProgressDialog progress;
     progress.setMax(polys.size());
     progress.show();
@@ -368,12 +381,12 @@ void Widget::cleanDnaClicked()
             }
         }
 
-        // Remove polys that don't change or worsen the fitness
+        // Remove polys that don't change or worsen the fitness, or are under the threshold
         QVector<Poly> polyBak = polys;
         polys.remove(i);
         redraw(generated);
         int newFit = computeFitness(generated);
-        if (newFit <= fitness)
+        if (newFit <= fitness + fitnessThreshold)
         {
             fitness = newFit;
             generation++;

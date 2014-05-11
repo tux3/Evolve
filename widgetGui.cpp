@@ -237,8 +237,8 @@ bool Widget::eventFilter(QObject *object, QEvent *event)
         //newpic = newpic.scaled(ui->imgOriginal->size());
         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
         QPoint endCoords = mouseEvent->pos();
-        endCoords.setX(max(min(endCoords.x(), newpic.width()),0));
-        endCoords.setY(max(min(endCoords.y(), newpic.height()),0));
+        endCoords.setX(max(min(endCoords.x(), ui->imgOriginal->width()),0));
+        endCoords.setY(max(min(endCoords.y(), ui->imgOriginal->height()),0));
         QPoint scaledStart = startCoords;
         scaledStart.rx() *= (float)width/ui->imgBest->width();
         scaledStart.ry() *= (float)height/ui->imgBest->height();

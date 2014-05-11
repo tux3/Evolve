@@ -18,6 +18,7 @@ SettingsWidget::SettingsWidget(QWidget *parent) :
     ui->focusRight->setValue(FOCUS_RIGHT);
     ui->focusTop->setValue(FOCUS_TOP);
     ui->focusBottom->setValue(FOCUS_BOTTOM);
+    ui->shapeOptFreqSpin->setValue(SHAPE_OPT_FREQ);
 }
 
 SettingsWidget::~SettingsWidget()
@@ -46,5 +47,6 @@ void SettingsWidget::okClicked()
     FOCUS_RIGHT = ui->focusRight->value();
     FOCUS_TOP = ui->focusTop->value();
     FOCUS_BOTTOM = ui->focusBottom->value();
+    SHAPE_OPT_FREQ = ui->shapeOptFreqSpin->value();
     close();
 }
