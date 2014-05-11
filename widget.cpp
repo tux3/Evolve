@@ -114,33 +114,43 @@ int Widget::computeFitness(QImage& target, QRect box)
 void Widget::run()
 {
     // Main loop
-    while (running /* && polys.size() < N_POLYS */ )
+    while (running)
     {
-        Poly poly = genPoly();
-        QImage newGen = generated;
-        drawPoly(newGen, poly);
-        generation++;
-        int newFit = computeFitness(newGen);
-        if (newFit < fitness)
+        if (polys.size() > 25 && qrand()%3 == 0)
         {
-            polys.append(poly);
-
-            // Optimize colors
-            QImage clean = generated;
-            optimizeColors(clean, polys.last());
-            //optimizeShape(clean, polys.last());
-
-            // Update data
-            //generated = newGen;
-            fitness = computeFitness(generated);
-
-            // Update GUI
-            ui->imgBest->setPixmap(QPixmap::fromImage(generated));
-            ui->polysLabel->setNum(polys.size());
-            updateGuiFitness();
+            int i = qrand()%polys.size();
+            optimizeShape(generated, polys[i], true);
         }
-        ui->generationLabel->setNum(generation);
-        app->processEvents();
+        else
+        {
+
+            Poly poly = genPoly();
+            QImage newGen = generated;
+            drawPoly(newGen, poly);
+            generation++;
+            int newFit = computeFitness(newGen);
+            if (newFit < fitness)
+            {
+                polys.append(poly);
+
+                // Optimize colors
+                QImage clean = generated;
+                generated = newGen;
+                optimizeColors(clean, polys.last());
+                optimizeShape(clean, polys.last());
+
+                // Update data
+                //generated = newGen;
+                fitness = computeFitness(generated);
+
+                // Update GUI
+                ui->imgBest->setPixmap(QPixmap::fromImage(generated));
+                ui->polysLabel->setNum(polys.size());
+                updateGuiFitness();
+            }
+            ui->generationLabel->setNum(generation);
+            app->processEvents();
+        }
     }
 }
 
@@ -186,8 +196,6 @@ QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)
         else
             return false;
     };
-
-    validate();
 
     int targetColor;
     for (targetColor=0; targetColor <= 8; targetColor++)
@@ -302,7 +310,7 @@ Poly Widget::genPoly()
     avgx /= N_POLY_POINTS;
     avgy /= N_POLY_POINTS;
     poly.color = pic.pixel(avgx,avgy);
-    poly.color.setAlpha(qrand()%130+20);
+    poly.color.setAlpha(qrand()%180+20);
 #endif
     return poly;
 }
@@ -403,7 +411,7 @@ void Widget::optimizeDnaClicked()
         if (!progress.isVisible())
             break;
         optimizeColors(generated, poly, true);
-        //optimizeShape(generated, poly, true);
+        optimizeShape(generated, poly, true);
         progress.increment();
         app->processEvents();
     }

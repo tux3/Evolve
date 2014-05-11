@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Evolution Vectorizer</string>
+   <string>Evolution Vectorizer 1.2</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <property name="leftMargin">
@@ -26,7 +26,7 @@
    <item row="3" column="2">
     <widget class="QLabel" name="imgBest">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
@@ -118,7 +118,7 @@
    <item row="3" column="1">
     <widget class="QLabel" name="imgOriginal">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
