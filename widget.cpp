@@ -99,25 +99,62 @@ int Widget::computeFitness(QImage& target, QRect box)
             }
         }
     };
-    QFuture<void> firstSlice = QtConcurrent::run(computeSlice, miny, maxy/2);
-    computeSlice(maxy/2, maxy);
-    firstSlice.waitForFinished();
-
+    QFuture<void> slices[N_CORES];
+    for (int i=0; i < N_CORES; i++){
+        slices[i] = QtConcurrent::run(computeSlice, miny+(maxy/N_CORES) *i, (maxy/N_CORES) * (i+1));
+    }
+    for (int i=0; i < N_CORES; i++){
+        slices[i].waitForFinished();
+    }
     return fitness.load();
 }
 
 void Widget::run()
 {
+    int newFit;
     // Main loop
     while (running /* && polys.size() < N_POLYS */ )
     {
-        Poly poly = genPoly();
+        Poly poly;
         QImage newGen = generated;
+        if (polys.length() >= 30){
+            int i = qrand() % polys.length();
+            poly = polys[i];
+            int count = polys[i].points.length();
+            int miny=999, maxy=0, minx=999,maxx=0;
+            for(int j=0;j<count;j++){
+                int curx=polys[i].points[j].x();
+                int cury=polys[i].points[j].y();
+                maxx = max(curx,maxx);
+                maxy = max(cury,maxy);
+                minx = min(curx,minx);
+                miny = min(cury,miny);
+                polys[i].points[j].setX(qrand() % width);
+                polys[i].points[j].setY(qrand() % height);
+            }
+            redraw(newGen);
+            //QRect q (minx,miny,maxx,maxy);
+            newFit = computeFitness(newGen);
+            //int oldFit = computeFitness(generated,q);
+            if (newFit >= fitness) { //why does it keep swapping itself?
+                polys[i]=poly; //undo
+            } else {
+                QImage clean = generated;
+                optimizeColors(clean, poly);
+                fitness = computeFitness(generated);
+                ui->imgBest->setPixmap(QPixmap::fromImage(generated));
+                updateGuiFitness();
+
+            }
+        }
+        newGen = generated;
+        poly = genPoly();
         drawPoly(newGen, poly);
         generation++;
-        int newFit = computeFitness(newGen);
+        newFit = computeFitness(newGen);
         if (newFit < fitness)
         {
+
             polys.append(poly);
 
             // Optimize colors
