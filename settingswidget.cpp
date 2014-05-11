@@ -1,6 +1,7 @@
 #include "settingswidget.h"
 #include "ui_settingswidget.h"
 #include "settings.h"
+#include <QMessageBox>
 
 SettingsWidget::SettingsWidget(QWidget *parent) :
     QWidget(parent),
@@ -31,6 +32,14 @@ void SettingsWidget::cancelClicked()
 
 void SettingsWidget::okClicked()
 {
+    if (ui->focusLeft->value() >= ui->focusRight->value()
+        || ui->focusTop->value() >= ui->focusBottom->value())
+    {
+        QMessageBox::critical(this, "Error", "Invalid Focus settings");
+        close();
+        return;
+    }
+
     N_POLY_POINTS = ui->nPointsSpin->value();
     N_COLOR_VAR = ui->colorVarSpin->value();
     FOCUS_LEFT = ui->focusLeft->value();
