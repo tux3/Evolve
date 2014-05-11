@@ -118,20 +118,42 @@ void Widget::run()
         Poly poly;
         QImage newGen = generated;
         if (polys.length() >= 30){
+            //POLY MUTATION
             int i = qrand() % polys.length();
             poly = polys[i];
             int count = polys[i].points.length();
-            int miny=999, maxy=0, minx=999,maxx=0;
+            int maxd = 0;
+            int farthestP=0;
+            int avgX=0,avgY=0;
+            //average the furthest away point
             for(int j=0;j<count;j++){
                 int curx=polys[i].points[j].x();
                 int cury=polys[i].points[j].y();
-                maxx = max(curx,maxx);
-                maxy = max(cury,maxy);
-                minx = min(curx,minx);
-                miny = min(cury,miny);
-                polys[i].points[j].setX(qrand() % width);
-                polys[i].points[j].setY(qrand() % height);
+                avgX+=curx;
+                avgY+=cury;
+                if (curx*curx+cury*cury>maxd){ //COULD use sqrt but given it's linear growth I can avoid it on every poly.
+                    maxd=curx*curx+cury*cury;
+                    farthestP =j;
+                }
             }
+            avgX=(int)(avgX/count);
+            avgY=(int)(avgY/count);
+            polys[i].points[farthestP].setX((int)(avgX+poly.points[farthestP].x())/2);
+            polys[i].points[farthestP].setY((int)(avgY+poly.points[farthestP].y())/2);
+            //ADD average point to poly
+            if (poly.points.count() < 8) {
+                int pIndex = 1+(qrand() % (polys[i].points.count()-2));
+                int avgX=(int)((polys[i].points[pIndex-1].x()+polys[i].points[pIndex].x())/2);
+                int avgY=(int)((polys[i].points[pIndex-1].y()+polys[i].points[pIndex].y())/2);
+                QPoint q(avgX,avgY);
+                polys[i].points.append(q);
+            }
+            //REMOVE random point from poly
+            if (poly.points.count() > 3) {
+                int pIndex = qrand() % polys[i].points.count();
+                polys[i].points.removeAt(pIndex);
+            }
+
             redraw(newGen);
             //QRect q (minx,miny,maxx,maxy);
             newFit = computeFitness(newGen);
@@ -144,9 +166,9 @@ void Widget::run()
                 fitness = computeFitness(generated);
                 ui->imgBest->setPixmap(QPixmap::fromImage(generated));
                 updateGuiFitness();
-
             }
-        }
+       }
+
         newGen = generated;
         poly = genPoly();
         drawPoly(newGen, poly);
