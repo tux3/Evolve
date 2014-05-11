@@ -32,8 +32,6 @@ int main(int argc, char *argv[])
  * TODO
  * Make the DNA loading size independent. If it's not the same size, then resize the polys. It's a vector.
  *
- * Make an option to only redraw around a particular poly, in a bounding box around this poly
- *
  * After a limit of poly is reached (set in settings) maybe add a virtual fitness penalty to new polys
  * Prefer modifying existing polys instead.
  *
@@ -52,10 +50,12 @@ int main(int argc, char *argv[])
  * They each draw their own pile + the common pile, and at the end you stitch the 4 drawn corner in the full pic.
  * This would work well with the autofocus.
  *
- * We still spend most of our time in computeFitness.
- * A working computeFitness with bounding boxes would be a huge improvement.
+ * We need bounding boxes when optimizing a particular poly
  * Maybe we could not process the whole image's fitness until after we're done optimizing
- * We just need to know if the bounding box's zone improved.
+ * We just need to know if the bounding box's zone improved
+ * This should give a huge boost, especially for smaller polys.
+ * We just need to be careful in optimizeShape since the bounding box's dimensions change every iteration
+ * Most everywhere else we can just compute the bounding box once at the start.
  *
  * Apply optimizeShape's redraw optimizations to optimizeColor
  *

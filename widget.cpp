@@ -123,6 +123,7 @@ void Widget::run()
         {
             int i = qrand()%polys.size();
             optimizeShape(generated, polys[i], true);
+            app->processEvents();
         }
         else
         {
@@ -140,7 +141,7 @@ void Widget::run()
 
                 // Optimize
                 optimizeColors(clean, polys.last());
-                optimizeShape(clean, polys.last());
+                //optimizeShape(clean, polys.last());
                 fitness = computeFitness(generated);
 
                 // Update GUI
@@ -203,7 +204,7 @@ QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)
     {
         do
         {
-            if (processEventsRatelimit == 10) // processEvents is a massive slowdown
+            if (processEventsRatelimit == GUI_REFRESH_RATE) // processEvents is a massive slowdown
             {
                 processEventsRatelimit=0;
                 app->processEvents();
@@ -256,6 +257,7 @@ void Widget::optimizeShape(QImage& target, Poly& poly, bool redraw)
             painter.setBrush(brush);
             painter.drawPolygon(polys[polyIndex].points.data(), polys[polyIndex].points.size());
         }
+        app->processEvents();
     }
 
     // Check if the pic is better, commit and return if it is
@@ -298,18 +300,18 @@ void Widget::optimizeShape(QImage& target, Poly& poly, bool redraw)
             return false;
     };
 
+    int processEventsRatelimit = 0;
     for (QPoint& point : poly.points)
     {
         // Only try once each directions until they stop working
         // Instead of retrying other directions after one stops working
         // Call repeatedly to optimize further
         int direction;
-        int processEventsRatelimit = 0;
         for (direction=0; direction<4; direction++)
         {
             do
             {
-                if (processEventsRatelimit == 10) // processEvents is a massive slowdown
+                if (processEventsRatelimit == GUI_REFRESH_RATE) // processEvents is a massive slowdown
                 {
                     processEventsRatelimit=0;
                     app->processEvents();
@@ -478,6 +480,8 @@ void Widget::optimizeDnaClicked()
         if (!progress.isVisible())
             break;
         optimizeColors(generated, poly, true);
+        if (!progress.isVisible())
+            break;
         optimizeShape(generated, poly, true);
         progress.increment();
         app->processEvents();

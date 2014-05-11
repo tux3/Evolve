@@ -256,10 +256,10 @@ bool Widget::eventFilter(QObject *object, QEvent *event)
         ui->imgOriginal->setPixmap(newpic);
 
         // Set the focus coords
-        FOCUS_LEFT = min(startCoords.x(),endCoords.x())*100/newpic.width();
-        FOCUS_RIGHT = max(startCoords.x(),endCoords.x())*100/newpic.width();
-        FOCUS_TOP = min(startCoords.y(),endCoords.y())*100/newpic.height();
-        FOCUS_BOTTOM = max(startCoords.y(),endCoords.y())*100/newpic.height();
+        FOCUS_LEFT = min(scaledStart.x(),scaledEnd.x())*100/newpic.width();
+        FOCUS_RIGHT = max(scaledStart.x(),scaledEnd.x())*100/newpic.width();
+        FOCUS_TOP = min(scaledStart.y(),scaledEnd.y())*100/newpic.height();
+        FOCUS_BOTTOM = max(scaledStart.y(),scaledEnd.y())*100/newpic.height();
         if (FOCUS_LEFT == 100)
             FOCUS_LEFT = 99;
         if (FOCUS_TOP == 100)

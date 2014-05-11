@@ -13,12 +13,14 @@ SettingsWidget::SettingsWidget(QWidget *parent) :
 
     // Setup values
     ui->colorVarSpin->setValue(N_COLOR_VAR);
+    ui->shapeVarSpin->setValue(N_POS_VAR);
     ui->nPointsSpin->setValue(N_POLY_POINTS);
     ui->focusLeft->setValue(FOCUS_LEFT);
     ui->focusRight->setValue(FOCUS_RIGHT);
     ui->focusTop->setValue(FOCUS_TOP);
     ui->focusBottom->setValue(FOCUS_BOTTOM);
     ui->shapeOptFreqSpin->setValue(SHAPE_OPT_FREQ);
+    ui->guiRefreshSpin->setValue(GUI_REFRESH_RATE);
 }
 
 SettingsWidget::~SettingsWidget()
@@ -43,10 +45,12 @@ void SettingsWidget::okClicked()
 
     N_POLY_POINTS = ui->nPointsSpin->value();
     N_COLOR_VAR = ui->colorVarSpin->value();
+    N_POS_VAR = ui->shapeVarSpin->value();
     FOCUS_LEFT = ui->focusLeft->value();
     FOCUS_RIGHT = ui->focusRight->value();
     FOCUS_TOP = ui->focusTop->value();
     FOCUS_BOTTOM = ui->focusBottom->value();
     SHAPE_OPT_FREQ = ui->shapeOptFreqSpin->value();
+    GUI_REFRESH_RATE = ui->guiRefreshSpin->value();
     close();
 }
