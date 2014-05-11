@@ -90,7 +90,7 @@ int Widget::computeFitness(QImage& target, QRect box)
 
     auto computeSlice = [&](unsigned start, unsigned end)
     {
-        for (unsigned i=0; i<end-start; i++)
+        for (unsigned i=start-miny; i<end-miny; i++)
         {
             // Sum of the differences of each pixel's color
             for (unsigned j=minx; j<maxx; j++)
@@ -128,6 +128,7 @@ void Widget::run()
             // Optimize colors
             QImage clean = generated;
             optimizeColors(clean, polys.last());
+            //optimizeShape(clean, polys.last());
 
             // Update data
             //generated = newGen;
@@ -145,6 +146,7 @@ void Widget::run()
 
 QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)
 {
+    /*
     // Find the poly's bounding box
     int minx,miny,maxx,maxy;
     minx = maxx = poly.points[0].x();
@@ -157,6 +159,7 @@ QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)
         maxy = max(maxy, point.y());
     }
     QRect box(minx, miny, maxx-minx, maxy-miny);
+    */
 
     // Check if the pic is better, commit and return if it is
     auto validate = [&]()
@@ -184,9 +187,9 @@ QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)
             return false;
     };
 
-    int targetColor; // 0=R, 1=G, 2=B, 3=A
+    validate();
 
-    // Add
+    int targetColor;
     for (targetColor=0; targetColor <= 8; targetColor++)
     {
         do
@@ -220,19 +223,75 @@ QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)
     return poly.color;
 }
 
+void Widget::optimizeShape(QImage& target, Poly& poly, bool redraw)
+{
+    // Check if the pic is better, commit and return if it is
+    auto validate = [&]()
+    {
+        QImage newGen = target;
+        if (redraw)
+            this->redraw(newGen);
+        else
+            drawPoly(newGen, poly);
+        int newFit = computeFitness(newGen);
+        generation++;
+        ui->generationLabel->setNum(generation);
+        if (newFit < fitness)
+        {
+            // Update data
+            generated = newGen;
+            fitness = newFit;
+
+            // Update GUI
+            ui->imgBest->setPixmap(QPixmap::fromImage(generated));
+            updateGuiFitness();
+            return true;
+        }
+        else
+            return false;
+    };
+
+    for (QPoint& point : poly.points)
+    {
+        // Only try once each directions until they stop working
+        // Instead of retrying other directions after one stops working
+        // Call repeatedly to optimize further
+        int direction;
+        for (direction=0; direction<4; direction++)
+        {
+            do
+            {
+                app->processEvents();
+                if (direction==0)
+                    point.setY(max(point.y()-N_POS_VAR,0));
+                else if (direction==1)
+                    point.setX(min((unsigned)point.x()+N_POS_VAR, width));
+                else if (direction==2)
+                    point.setY(min((unsigned)point.y()+N_POS_VAR, height));
+                else if (direction==3)
+                    point.setX(max(point.x()-N_POS_VAR,0));
+            } while (validate());
+        }
+    }
+}
+
 Poly Widget::genPoly()
 {
     Poly poly;
     for (int i=0; i<N_POLY_POINTS; i++)
     {
         quint16 x,y;
-        x = qrand()%(int)(width*(((float)FOCUS_RIGHT-FOCUS_LEFT)/100)) + (width*(float)FOCUS_LEFT/100);
-        y = qrand()%(int)(height*(((float)FOCUS_BOTTOM-FOCUS_TOP)/100)) + (height*(float)FOCUS_TOP/100);
+        int wMod = (int)(((float)width*(float)(FOCUS_RIGHT-FOCUS_LEFT))/100.0);
+        int hMod = (int)(((float)height*(float)(FOCUS_BOTTOM-FOCUS_TOP))/100.0);
+        x = qrand()%wMod;
+        x += (width*(float)FOCUS_LEFT/100.0);
+        y = qrand()%hMod;
+        y += (height*(float)FOCUS_TOP/100.0);
         poly.points.append(QPoint(x,y));
     }
 #if GEN_WITH_RANDOM_COLOR
     poly.color = QColor::fromRgb(qrand()*qrand()*qrand());
-    poly.color.setAlpha(qrand()%130+20);
+    poly.color.setAlpha(qrand()%180+20);
 #else
     quint64 avgx=0, avgy=0;
     for (QPoint point : poly.points)
@@ -344,6 +403,7 @@ void Widget::optimizeDnaClicked()
         if (!progress.isVisible())
             break;
         optimizeColors(generated, poly, true);
+        //optimizeShape(generated, poly, true);
         progress.increment();
         app->processEvents();
     }

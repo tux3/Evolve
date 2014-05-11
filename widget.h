@@ -27,6 +27,7 @@ public:
     static void drawPoly(QImage& target, Poly& poly);
     void redraw(QImage& target);
     QColor optimizeColors(QImage& target, Poly& poly, bool redraw=false);
+    void optimizeShape(QImage& target, Poly& poly, bool redraw=false);
     void updateGuiFitness();
     void run(); // Run the vectorizer's main loop
     void setRunningGui();
