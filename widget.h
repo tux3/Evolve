@@ -25,6 +25,7 @@ public:
     int computeFitness(QImage& target, QRect box=QRect());
     Poly genPoly(); // Creates a new random polygon
     static void drawPoly(QImage& target, Poly& poly);
+    static void drawPoly(QImage& target, Poly& poly, QPainter& painter);
     void redraw(QImage& target);
     QColor optimizeColors(QImage& target, Poly& poly, bool redraw=false);
     void optimizeShape(QImage& target, Poly& poly, bool redraw=false);

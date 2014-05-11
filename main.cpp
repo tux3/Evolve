@@ -52,18 +52,11 @@ int main(int argc, char *argv[])
  * They each draw their own pile + the common pile, and at the end you stitch the 4 drawn corner in the full pic.
  * This would work well with the autofocus.
  *
- * Profiling says the really expensive part is the QColor ctor and getRgb
- * So basically the inner loop of computeFitness
- *
- * Optimization : When we need to redraw several times for a poly, only draw the previous polys once
- * Keep the image with the previous polys, modify the poly, and only redraw the ones on top every time.
- *
- * In optimizeShape and also a little in optimiseColor (but way less), we spend too much time processing events.
- * Maybe only process 1/3 of the time, or something. Make this configurable ?
- *
  * We still spend most of our time in computeFitness.
  * A working computeFitness with bounding boxes would be a huge improvement.
  * Maybe we could not process the whole image's fitness until after we're done optimizing
  * We just need to know if the bounding box's zone improved.
+ *
+ * Apply optimizeShape's redraw optimizations to optimizeColor
  *
  */

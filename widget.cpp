@@ -203,7 +203,7 @@ QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)
     {
         do
         {
-            if (processEventsRatelimit == 2) // processEvents is a massive slowdown
+            if (processEventsRatelimit == 10) // processEvents is a massive slowdown
             {
                 processEventsRatelimit=0;
                 app->processEvents();
@@ -246,9 +246,16 @@ void Widget::optimizeShape(QImage& target, Poly& poly, bool redraw)
     {
         // Precompute the image of all the polys before this one
         predraw.fill(Qt::white);
+        static QBrush brush(Qt::SolidPattern);
+        QPainter painter(&predraw);
+        painter.setPen(QPen(Qt::NoPen));
         polyIndex = polys.indexOf(poly);
         for (int i=0; i<polyIndex; ++i)
-            drawPoly(predraw, polys[i]);
+        {
+            brush.setColor(polys[polyIndex].color);
+            painter.setBrush(brush);
+            painter.drawPolygon(polys[polyIndex].points.data(), polys[polyIndex].points.size());
+        }
     }
 
     // Check if the pic is better, commit and return if it is
@@ -258,8 +265,15 @@ void Widget::optimizeShape(QImage& target, Poly& poly, bool redraw)
         if (redraw)
         {
             newGen = predraw;
+            static QBrush brush(Qt::SolidPattern);
+            QPainter painter(&predraw);
+            painter.setPen(QPen(Qt::NoPen));
             for (int i=polyIndex; i<polys.size(); ++i)
-                drawPoly(newGen, polys[i]);
+            {
+                brush.setColor(polys[polyIndex].color);
+                painter.setBrush(brush);
+                painter.drawPolygon(polys[polyIndex].points.data(), polys[polyIndex].points.size());
+            }
         }
         else
         {
@@ -295,7 +309,7 @@ void Widget::optimizeShape(QImage& target, Poly& poly, bool redraw)
         {
             do
             {
-                if (processEventsRatelimit == 4) // processEvents is a massive slowdown
+                if (processEventsRatelimit == 10) // processEvents is a massive slowdown
                 {
                     processEventsRatelimit=0;
                     app->processEvents();
@@ -351,19 +365,26 @@ Poly Widget::genPoly()
 
 void Widget::drawPoly(QImage& target, Poly& poly)
 {
+    static QBrush brush(Qt::SolidPattern);
     QPainter painter(&target);
     painter.setPen(QPen(Qt::NoPen));
-    QBrush brush(poly.color);
-    brush.setStyle(Qt::SolidPattern);
+    brush.setColor(poly.color);
     painter.setBrush(brush);
     painter.drawPolygon(poly.points.data(), poly.points.size());
 }
 
 void Widget::redraw(QImage& target)
 {
+    static QBrush brush(Qt::SolidPattern);
     target.fill(Qt::white);
+    QPainter painter(&target);
+    painter.setPen(QPen(Qt::NoPen));
     for (Poly& poly : polys)
-        drawPoly(target, poly);
+    {
+        brush.setColor(poly.color);
+        painter.setBrush(brush);
+        painter.drawPolygon(poly.points.data(), poly.points.size());
+    }
 }
 
 void Widget::cleanDnaClicked()
