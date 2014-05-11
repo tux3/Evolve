@@ -29,6 +29,8 @@ public:
     QColor optimizeColors(QImage& target, Poly& poly, bool redraw=false);
     void updateGuiFitness();
     void run(); // Run the vectorizer's main loop
+    void setRunningGui();
+    void setStoppedGui();
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -43,11 +45,12 @@ private slots:
     void optimizeDnaClicked();
     void startClicked();
     void settingsClicked();
+    void githubClicked();
     
 private:
     Ui::Widget *ui;
     QMenuBar *menuBar;
-    QAction* startStopAction;
+    QAction* startStopAction, *openAction, *cleanAction, *optimizeAction;
     QImage pic;
     QImage generated;
     bool running;

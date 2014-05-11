@@ -7,6 +7,8 @@
 #include <QFile>
 #include <QtSvg/QSvgGenerator>
 #include <QPainter>
+#include <QThreadPool>
+#include <QDebug>
 
 void Widget::closeEvent(QCloseEvent *event)
 {
@@ -21,6 +23,8 @@ void Widget::openImageClicked()
     QFile file(filename);
     if (!file.open(QIODevice::ReadOnly))
         return;
+
+    running = false;
 
     pic.loadFromData(file.readAll());
     pic = pic.convertToFormat(QImage::Format_ARGB32);
@@ -150,15 +154,42 @@ void Widget::startClicked()
     if (running)
     {
         running = false;
-        ui->btnStart->setText("Start");
-        startStopAction->setText("S&tart");
+        setStoppedGui();
         return;
     }
     if (pic.isNull())
         return;
     running=true;
-    ui->btnStart->setText("Stop");
-    startStopAction->setText("S&top");
+    setRunningGui();
 
     run();
+}
+
+void Widget::githubClicked()
+{
+#ifdef WIN32
+    system("start http://github.com/tux3/Evolve");
+#else
+    QMessageBox::information(this,"GitHub","http://github.com/tux3/Evolve");
+#endif
+}
+
+void Widget::setRunningGui()
+{
+    ui->btnOpen->setEnabled(false);
+    openAction->setEnabled(false);
+    cleanAction->setEnabled(false);
+    optimizeAction->setEnabled(false);
+    startStopAction->setText("S&top");
+    ui->btnStart->setText("Stop");
+}
+
+void Widget::setStoppedGui()
+{
+    startStopAction->setText("S&tart");
+    ui->btnStart->setText("Start");
+    ui->btnOpen->setEnabled(true);
+    openAction->setEnabled(true);
+    cleanAction->setEnabled(true);
+    optimizeAction->setEnabled(true);
 }

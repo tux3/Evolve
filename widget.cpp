@@ -25,7 +25,7 @@ Widget::Widget() :
     // Build the menu
     menuBar = new QMenuBar(this);
     QMenu* fileMenu = menuBar->addMenu(tr("&File"));
-    fileMenu->addAction("&Open image", this, SLOT(openImageClicked()));
+    openAction = fileMenu->addAction("&Open image", this, SLOT(openImageClicked()));
     fileMenu->addAction("&Save image", this, SLOT(saveImageClicked()));
     fileMenu->addAction("&Export as SVG", this, SLOT(saveSVGClicked()));
     fileMenu->addSeparator();
@@ -34,10 +34,12 @@ Widget::Widget() :
     QMenu* dnaMenu = menuBar->addMenu(tr("&DNA"));
     dnaMenu->addAction("&Import DNA", this, SLOT(importDnaClicked()));
     dnaMenu->addAction("&Export DNA", this, SLOT(exportDnaClicked()));
-    dnaMenu->addAction("&Clean DNA", this, SLOT(cleanDnaClicked()));
-    dnaMenu->addAction("&Optimize DNA", this, SLOT(optimizeDnaClicked()));
+    cleanAction = dnaMenu->addAction("&Clean DNA", this, SLOT(cleanDnaClicked()));
+    optimizeAction = dnaMenu->addAction("&Optimize DNA", this, SLOT(optimizeDnaClicked()));
     QMenu* settingsMenu = menuBar->addMenu(tr("&Settings"));
     settingsMenu->addAction("&Settings", this, SLOT(settingsClicked()));
+    QMenu* helpMenu = menuBar->addMenu(tr("&?"));
+    helpMenu->addAction("GitHub page", this, SLOT(githubClicked()));
     ui->gridLayout->addWidget(menuBar,0,0,1,4);
     menuBar->setFixedHeight(22);
 
@@ -263,6 +265,7 @@ void Widget::redraw(QImage& target)
 void Widget::cleanDnaClicked()
 {
     // Make sure we're the only one touching the polys
+    setRunningGui();
     ui->btnStart->setEnabled(false);
     startStopAction->setEnabled(false);
     ui->btnStart->setText("Start");
@@ -317,12 +320,14 @@ void Widget::cleanDnaClicked()
         }
 
     }
+    setStoppedGui();
     startStopAction->setEnabled(true);
     ui->btnStart->setEnabled(true);
 }
 
 void Widget::optimizeDnaClicked()
 {
+    setRunningGui();
     ui->btnStart->setEnabled(false);
     startStopAction->setEnabled(false);
     ui->btnStart->setText("Start");
@@ -340,6 +345,7 @@ void Widget::optimizeDnaClicked()
         app->processEvents();
     }
 
+    setStoppedGui();
     startStopAction->setEnabled(true);
     ui->btnStart->setEnabled(true);
 }
