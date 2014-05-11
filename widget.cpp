@@ -114,6 +114,9 @@ int Widget::computeFitness(QImage& target, QRect box)
 
 void Widget::run()
 {
+    unsigned worstFitness = width*height*3*255;
+    int fitnessThreshold = 0.00005*((double)worstFitness)/100.0;
+
     // Main loop
     while (running)
     {
@@ -130,7 +133,7 @@ void Widget::run()
             drawPoly(newGen, poly);
             generation++;
             int newFit = computeFitness(newGen);
-            if (newFit < fitness)
+            if (newFit + fitnessThreshold < fitness)
             {
                 // Update data
                 polys.append(poly);
@@ -375,9 +378,7 @@ void Widget::cleanDnaClicked()
                 polys.remove(i);
                 generation++;
                 ui->generationLabel->setNum(generation);
-
-                // Go to the next poly
-                break;
+                break; // Go to the next poly
             }
         }
 
@@ -385,7 +386,7 @@ void Widget::cleanDnaClicked()
         QVector<Poly> polyBak = polys;
         polys.remove(i);
         redraw(generated);
-        int newFit = computeFitness(generated);
+        unsigned newFit = computeFitness(generated);
         if (newFit <= fitness + fitnessThreshold)
         {
             fitness = newFit;
