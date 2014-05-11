@@ -65,8 +65,6 @@ Widget::~Widget()
 
 int Widget::computeFitness(QImage& target, QRect box)
 {
-    QAtomicInt fitness = 0;
-
     unsigned minx, maxx, miny, maxy;
     if (box.isNull())
     {
@@ -82,8 +80,8 @@ int Widget::computeFitness(QImage& target, QRect box)
         maxy = miny + box.height();
     }
 
-    QVector<QRgb*> targetLines;
     QVector<QRgb*> originalLines;
+    QVector<QRgb*> targetLines;
     for (unsigned i=miny; i<maxy; i++)
         originalLines.append((QRgb*)pic.scanLine(i));
     for (unsigned i=miny; i<maxy; i++)
@@ -91,25 +89,26 @@ int Widget::computeFitness(QImage& target, QRect box)
 
     auto computeSlice = [&](unsigned start, unsigned end)
     {
+        unsigned partFitness=0;
         for (unsigned i=start-miny; i<end-miny; i++)
         {
             // Sum of the differences of each pixel's color
             for (unsigned j=minx; j<maxx; j++)
             {
-                int tR,tG,tB;
-                int oR,oG,oB;
-                QColor(targetLines.at(i)[j]).getRgb(&tR,&tG,&tB);
-                QColor(originalLines.at(i)[j]).getRgb(&oR,&oG,&oB);
-                unsigned diff = abs(tR-oR)+abs(tG-oG)+abs(tB-oB);
-                fitness.fetchAndAddRelaxed(diff);
+                QRgb ocolor = originalLines.at(i)[j];
+                int oR=qRed(ocolor), oG=qGreen(ocolor), oB=qBlue(ocolor);
+                QRgb tcolor = targetLines.at(i)[j];
+                int tR=qRed(tcolor), tG=qGreen(tcolor), tB=qBlue(tcolor);
+                partFitness += abs(tR-oR)+abs(tG-oG)+abs(tB-oB);
             }
         }
+        return partFitness;
     };
-    QFuture<void> firstSlice = QtConcurrent::run(computeSlice, miny, maxy/2);
-    computeSlice(maxy/2, maxy);
-    firstSlice.waitForFinished();
+    QFuture<unsigned> firstSlice = QtConcurrent::run(computeSlice, miny, maxy/2);
+    unsigned fitness = computeSlice(maxy/2, maxy);
+    fitness += firstSlice.result();
 
-    return fitness.load();
+    return fitness;
 }
 
 void Widget::run()
@@ -127,7 +126,6 @@ void Widget::run()
         }
         else
         {
-
             Poly poly = genPoly();
             QImage newGen = generated;
             drawPoly(newGen, poly);
@@ -199,12 +197,19 @@ QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)
             return false;
     };
 
+    int processEventsRatelimit = 0;
     int targetColor;
     for (targetColor=0; targetColor <= 8; targetColor++)
     {
         do
         {
-            app->processEvents();
+            if (processEventsRatelimit == 2) // processEvents is a massive slowdown
+            {
+                processEventsRatelimit=0;
+                app->processEvents();
+            }
+            else
+                processEventsRatelimit++;
             QColor color = poly.color;
             if (targetColor == 0)
                 color = color.lighter(110); // Lighter
@@ -235,14 +240,32 @@ QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)
 
 void Widget::optimizeShape(QImage& target, Poly& poly, bool redraw)
 {
+    int polyIndex=0;
+    QImage predraw(width, height, QImage::Format_ARGB32);
+    if (redraw)
+    {
+        // Precompute the image of all the polys before this one
+        predraw.fill(Qt::white);
+        polyIndex = polys.indexOf(poly);
+        for (int i=0; i<polyIndex; ++i)
+            drawPoly(predraw, polys[i]);
+    }
+
     // Check if the pic is better, commit and return if it is
     auto validate = [&]()
     {
-        QImage newGen = target;
+        QImage newGen;
         if (redraw)
-            this->redraw(newGen);
+        {
+            newGen = predraw;
+            for (int i=polyIndex; i<polys.size(); ++i)
+                drawPoly(newGen, polys[i]);
+        }
         else
+        {
+            newGen = target;
             drawPoly(newGen, poly);
+        }
         int newFit = computeFitness(newGen);
         generation++;
         ui->generationLabel->setNum(generation);
@@ -267,11 +290,19 @@ void Widget::optimizeShape(QImage& target, Poly& poly, bool redraw)
         // Instead of retrying other directions after one stops working
         // Call repeatedly to optimize further
         int direction;
+        int processEventsRatelimit = 0;
         for (direction=0; direction<4; direction++)
         {
             do
             {
-                app->processEvents();
+                if (processEventsRatelimit == 4) // processEvents is a massive slowdown
+                {
+                    processEventsRatelimit=0;
+                    app->processEvents();
+                }
+                else
+                    processEventsRatelimit++;
+
                 if (direction==0)
                     point.setY(max(point.y()-N_POS_VAR,0));
                 else if (direction==1)
@@ -283,6 +314,7 @@ void Widget::optimizeShape(QImage& target, Poly& poly, bool redraw)
             } while (validate());
         }
     }
+    app->processEvents();
 }
 
 Poly Widget::genPoly()

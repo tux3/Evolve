@@ -13,6 +13,7 @@ struct Poly
 {
 public:
     Poly();
+    bool operator==(const Poly& other);
 
 public:
     QVector<QPoint> points;

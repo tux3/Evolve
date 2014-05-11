@@ -5,6 +5,11 @@ Poly::Poly()
 
 }
 
+bool Poly::operator==(const Poly& other)
+{
+    return color == other.color && points == other.points;
+}
+
 QDataStream& operator<< (QDataStream& stream, const Poly& poly)
 {
     stream << poly.color;

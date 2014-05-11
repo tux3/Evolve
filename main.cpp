@@ -34,30 +34,36 @@ int main(int argc, char *argv[])
  *
  * Make an option to only redraw around a particular poly, in a bounding box around this poly
  *
- * Anon gets a crash when changing the vertex/numpoints count while running.
- *
- * We have a crash in computeFitness, at targetLine[j].getRgb
- * Using a focus on top right corner
- * Might be due to the threading. QImage is not thread safe (just reentrant)
- * Yep, probably. Can't reproduce withou the threading.
- *
- * Crash on clicking start on Debian
- * "Illegal instruction". What the fuck ?
- *
  * After a limit of poly is reached (set in settings) maybe add a virtual fitness penalty to new polys
  * Prefer modifying existing polys instead.
  *
  * We need command line control. For science.
  *
- * Maybe the idea of autofocus isn't that bad. Compute the fitness for 100 chunks, and focus on each. Then focus on the borders to fix them
- *
- * Okay, we have color optimizations, now we just need to add shape optimization just after the color.
- * It works like this : You find a suitable place to add a new poly, correct the color to fit the new place's color perfectly
- * and then reshape the poly to cover that new place perfectly. Or at least cover it as much as we can do reasonably fast.
+ * Maybe the idea of autofocus isn't that bad.
+ * Compute the fitness for X*X chunks (grid of size X).
+ * Then compute the fitness for the overlapped (X-1)*(X-1) chunks
+ * Then compute the average fitness.
+ * Then focus on each chunks for at least 1000 generations and at least until they all reach the average fitness.
+ * When we've cycled throught each chunk, recompute the fitnesses and cycle again.
  *
  * Here's a silly idea, when we add polys, we could sort them in 5 piles :
  * Covers the whole image, or covers only one of the 4 corner.
  * Then when redrawing the full image, we can separate into 4 threads.
  * They each draw their own pile + the common pile, and at the end you stitch the 4 drawn corner in the full pic.
+ * This would work well with the autofocus.
+ *
+ * Profiling says the really expensive part is the QColor ctor and getRgb
+ * So basically the inner loop of computeFitness
+ *
+ * Optimization : When we need to redraw several times for a poly, only draw the previous polys once
+ * Keep the image with the previous polys, modify the poly, and only redraw the ones on top every time.
+ *
+ * In optimizeShape and also a little in optimiseColor (but way less), we spend too much time processing events.
+ * Maybe only process 1/3 of the time, or something. Make this configurable ?
+ *
+ * We still spend most of our time in computeFitness.
+ * A working computeFitness with bounding boxes would be a huge improvement.
+ * Maybe we could not process the whole image's fitness until after we're done optimizing
+ * We just need to know if the bounding box's zone improved.
  *
  */
