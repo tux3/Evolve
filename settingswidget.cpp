@@ -17,6 +17,7 @@ SettingsWidget::SettingsWidget(QWidget *parent) :
     ui->focusRight->setValue(FOCUS_RIGHT);
     ui->focusTop->setValue(FOCUS_TOP);
     ui->focusBottom->setValue(FOCUS_BOTTOM);
+    ui->coreSpin->setValue(N_CORES);
 }
 
 SettingsWidget::~SettingsWidget()
@@ -37,5 +38,6 @@ void SettingsWidget::okClicked()
     FOCUS_RIGHT = ui->focusRight->value();
     FOCUS_TOP = ui->focusTop->value();
     FOCUS_BOTTOM = ui->focusBottom->value();
+    N_CORES = ui->coreSpin->value();
     close();
 }

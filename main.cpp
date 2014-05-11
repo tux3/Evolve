@@ -14,13 +14,14 @@ int main(int argc, char *argv[])
     parser.addPositionalArgument("filename", QCoreApplication::translate("main", "Image file to imitate."));
     parser.addHelpOption();
     parser.addVersionOption();
-    qDebug() << "filename:  " <<  QString filename;
+    /*qDebug() << "filename:  " <<  QString filename;
     QCommandLineOption accuracyOption(QStringList() << "n" << "accuracy", QCoreApplication::translate("main", "Evolve until this accuracy is reached."));
     parser.addOption(noListOption);
     QCommandLineOption outputFileOption(QStringList() << "n" << "output-file", QCoreApplication::translate("main", "Specify output file."));
     parser.addOption(outputFileOption);
     QCommandLineOption cliOnlyOption(QStringList() << "c" << "cli-only", QCoreApplication::translate("main", "Don't display gui."));
     parser.addOption(cliOnlyOption);
+    */
     app = &a;
     Widget w;
     w.show();
