@@ -44,6 +44,13 @@ void Widget::openImageClicked()
     generated = generated.convertToFormat(QImage::Format_ARGB32);
     ui->imgBest->setPixmap(QPixmap::fromImage(generated));
 
+    FOCUS_LEFT=0;
+    FOCUS_RIGHT=100;
+    FOCUS_TOP=0;
+    FOCUS_BOTTOM=100;
+
+    generation = 0;
+    ui->generationLabel->setNum(0);
     fitness = computeFitness(generated);
     updateGuiFitness();
     polys.clear();
