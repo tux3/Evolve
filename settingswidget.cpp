@@ -23,6 +23,7 @@ SettingsWidget::SettingsWidget(QWidget *parent) :
     ui->focusBottom->setValue(FOCUS_BOTTOM);
     ui->shapeOptFreqSpin->setValue(SHAPE_OPT_FREQ);
     ui->guiRefreshSpin->setValue(GUI_REFRESH_RATE);
+    ui->coreSpin->setValue(N_CORES);
 }
 
 SettingsWidget::~SettingsWidget()
@@ -56,5 +57,6 @@ void SettingsWidget::okClicked()
     FOCUS_BOTTOM = ui->focusBottom->value();
     SHAPE_OPT_FREQ = ui->shapeOptFreqSpin->value();
     GUI_REFRESH_RATE = ui->guiRefreshSpin->value();
+    N_CORES = ui->coreSpin->value();
     close();
 }

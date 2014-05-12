@@ -114,7 +114,7 @@ int Widget::computeFitness(const QImage& target, const QRect box)
     }
 	unsigned fitness=0;
     for (int i=0; i < N_CORES; i++)
-        fitness+=slices[i].result;
+        fitness+=slices[i].result();
     return fitness;
 }
 
