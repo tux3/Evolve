@@ -108,14 +108,13 @@ int Widget::computeFitness(const QImage& target, const QRect box)
         }
         return partFitness;
     };
-    QFuture<unsigned> slice1 = QtConcurrent::run(computeSlice, miny, maxy/4);
-    QFuture<unsigned> slice2 = QtConcurrent::run(computeSlice, maxy/4, 2*maxy/4);
-    QFuture<unsigned> slice3 = QtConcurrent::run(computeSlice, 2*maxy/4, 3*maxy/4);
-    unsigned fitness = computeSlice(3*maxy/4, maxy);
-    fitness += slice1.result();
-    fitness += slice2.result();
-    fitness += slice3.result();
-
+    QFuture<unsigned> slices[N_CORES];
+    for (int i=0; i < N_CORES; i++){
+        slices[i] = QtConcurrent::run(computeSlice, miny+(maxy/N_CORES) *i, (maxy/N_CORES) * (i+1));
+    }
+	unsigned fitness=0;
+    for (int i=0; i < N_CORES; i++)
+        fitness+=slices[i].result();
     return fitness;
 }
 
@@ -375,7 +374,9 @@ Poly Widget::genPoly()
     }
     avgx /= N_POLY_POINTS;
     avgy /= N_POLY_POINTS;
+
     poly.color = pic.pixel(avgx,avgy);
+    //poly.color = pic.pixel(avgx,avgy);
     poly.color.setAlpha(qrand()%180+20);
 #endif
     return poly;
