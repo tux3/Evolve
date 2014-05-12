@@ -19,6 +19,9 @@ private slots:
     void cancelClicked();
     void okClicked();
 
+public:
+    static bool isDefaultConfig;
+
 private:
     Ui::SettingsWidget *ui;
 };

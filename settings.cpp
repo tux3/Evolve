@@ -1,6 +1,6 @@
 #include "settings.h"
 
-int N_POLY_POINTS = 4;
+int N_POLY_POINTS = 6;
 int N_COLOR_VAR = 5;
 int N_POS_VAR = 5;
 int SHAPE_OPT_FREQ = 0;

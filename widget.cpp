@@ -2,6 +2,7 @@
 #include "ui_widget.h"
 #include "progressdialog.h"
 #include "settings.h"
+#include "settingsWidget.h"
 #include <QDataStream>
 #include <QString>
 #include <QPixmap>
@@ -119,9 +120,17 @@ void Widget::run()
     // Main loop
     while (running)
     {
-        if (polys.size() > 10 && SHAPE_OPT_FREQ != 0 && qrand()%SHAPE_OPT_FREQ == 0)
+        int polysSize = polys.size();
+
+        // Lower the number of points to get more details
+        if (polysSize == 25 && SettingsWidget::isDefaultConfig)
+            N_POLY_POINTS = 5;
+        else if (polysSize == 75 && SettingsWidget::isDefaultConfig)
+            N_POLY_POINTS = 4;
+
+        if (SHAPE_OPT_FREQ != 0 && polysSize > 10 && qrand()%SHAPE_OPT_FREQ == 0)
         {
-            int i = qrand()%polys.size();
+            int i = qrand()%polysSize;
             optimizeShape(generated, polys[i], true);
             app->processEvents();
         }

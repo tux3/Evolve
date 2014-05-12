@@ -59,4 +59,9 @@ int main(int argc, char *argv[])
  *
  * Apply optimizeShape's redraw optimizations to optimizeColor
  *
+ * For computeFitness precompute the original.
+ * When we load the original pic, immediatly create 3 arrays for the R, G, and B of each pixel.
+ * It's probably faster to use one hueg contiguous array rather than a multidimentional, for each color.
+ * We'll just use i*width+j with i*width computed out of the inner loop.
+ *
  */

@@ -3,6 +3,8 @@
 #include "settings.h"
 #include <QMessageBox>
 
+bool SettingsWidget::isDefaultConfig = true;
+
 SettingsWidget::SettingsWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::SettingsWidget)
@@ -42,6 +44,8 @@ void SettingsWidget::okClicked()
         close();
         return;
     }
+
+    isDefaultConfig = false;
 
     N_POLY_POINTS = ui->nPointsSpin->value();
     N_COLOR_VAR = ui->colorVarSpin->value();
