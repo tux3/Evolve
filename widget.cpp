@@ -105,10 +105,12 @@ int Widget::computeFitness(QImage& target, QRect box)
             }
         }
     };
-    QFuture<void> firstSlice = QtConcurrent::run(computeSlice, miny, maxy/2);
-    computeSlice(maxy/2, maxy);
-    firstSlice.waitForFinished();
-
+    QFuture<void> slices[N_CORES];
+    for (int i=0; i < N_CORES; i++){
+        slices[i] = QtConcurrent::run(computeSlice, miny+(maxy/N_CORES) *i, (maxy/N_CORES) * (i+1));
+    }
+    for (int i=0; i < N_CORES; i++)
+        slices[i].waitForFinished();
     return fitness.load();
 }
 
