@@ -2,7 +2,7 @@
 #include "ui_widget.h"
 #include "progressdialog.h"
 #include "settings.h"
-#include "settingsWidget.h"
+#include "settingswidget.h"
 #include <QDataStream>
 #include <QString>
 #include <QPixmap>
