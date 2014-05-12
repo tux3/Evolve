@@ -64,4 +64,27 @@ int main(int argc, char *argv[])
  * It's probably faster to use one hueg contiguous array rather than a multidimentional, for each color.
  * We'll just use i*width+j with i*width computed out of the inner loop.
  *
+ * Maybe in computeFitness we could convert everything to RGB instead of RGBA, so we'd always have 0xFF for the A
+ * And then blindly compute our difference of uint8_t, this way we might get vector instructions and unrolling.
+ *
+ * Stuff from EvoLisa :
+ * Can add new polygons at a random zindex instead of always on top
+ * Insert a new point in the middle of two points (then we could optimize the new point)
+ * Remove a point
+ * Can do multiple mutations at the same time. Can do no mutation at all.
+ * Maybe try to do this too, but we should avoid empty mutation loops if possible.
+ * Make it likely that we'll always have at least one mutation every loop.
+ * His probabilities of adding/removing points are per poly, so when you have a lot of polys
+ * the polys mutation loop is the only thing running, and it almost never adds/removes/moves polys, just mutate.
+ * And each poly mutated also has a point mutation loop. So it'd end up taking all the damn time with our polys.
+ * We should make it per mutation loop instead. Since we can have up to 10k polys without problem it seems better.
+ * He has separate mutation rates for everything.
+ * He has a min/max poly count and min/max point count.
+ * When mutating, accept <= changes in fitness. We accept +fitnessThreshold< currently
+ * Maybe keep the +fitnessThreshold< for adding the initial polys (until we reach minPolys)
+ * Then start mutating using <=. We shouldn't be able to get stuck doing/undoing in a loop,
+ * since the mutation process is mostly random, not optimizations.
+ * When we add a completely new poly, we'll still want to optimize its color/shape.
+ * But in the normal mutations we don't optimize the shape/color of random polys.
+ *
  */

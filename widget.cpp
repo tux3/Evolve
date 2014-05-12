@@ -15,6 +15,7 @@
 
 unsigned Widget::height;
 unsigned Widget::width;
+QImage Widget::pic;
 
 using namespace std;
 
@@ -64,7 +65,7 @@ Widget::~Widget()
     exit(0);
 }
 
-int Widget::computeFitness(QImage& target, QRect box)
+int Widget::computeFitness(const QImage& target, const QRect box)
 {
     unsigned minx, maxx, miny, maxy;
     if (box.isNull())
@@ -81,14 +82,16 @@ int Widget::computeFitness(QImage& target, QRect box)
         maxy = miny + box.height();
     }
 
-    QVector<QRgb*> originalLines;
-    QVector<QRgb*> targetLines;
+    static QVector<QRgb*> originalLines;
+    originalLines.resize(maxy-miny);
     for (unsigned i=miny; i<maxy; i++)
-        originalLines.append((QRgb*)pic.scanLine(i));
+        originalLines[i] = ((QRgb*)pic.scanLine(i));
+    static QVector<QRgb*> targetLines;
+    targetLines.resize(maxy-miny);
     for (unsigned i=miny; i<maxy; i++)
-        targetLines.append((QRgb*)target.scanLine(i));
+        targetLines[i] = ((QRgb*)target.scanLine(i));
 
-    auto computeSlice = [&](unsigned start, unsigned end)
+    auto computeSlice = [&](const unsigned start, const unsigned end)
     {
         unsigned partFitness=0;
         for (unsigned i=start-miny; i<end-miny; i++)
@@ -96,18 +99,22 @@ int Widget::computeFitness(QImage& target, QRect box)
             // Sum of the differences of each pixel's color
             for (unsigned j=minx; j<maxx; j++)
             {
-                QRgb ocolor = originalLines.at(i)[j];
-                int oR=qRed(ocolor), oG=qGreen(ocolor), oB=qBlue(ocolor);
-                QRgb tcolor = targetLines.at(i)[j];
-                int tR=qRed(tcolor), tG=qGreen(tcolor), tB=qBlue(tcolor);
+                unsigned ocolor = originalLines.at(i)[j];
+                int oR=(ocolor>>16), oG=(ocolor>>8)&0xFF, oB=(ocolor&0xFF);
+                unsigned tcolor = targetLines.at(i)[j];
+                int tR=(tcolor>>16), tG=(tcolor>>8)&0xFF, tB=(tcolor&0xFF);
                 partFitness += abs(tR-oR)+abs(tG-oG)+abs(tB-oB);
             }
         }
         return partFitness;
     };
-    QFuture<unsigned> firstSlice = QtConcurrent::run(computeSlice, miny, maxy/2);
-    unsigned fitness = computeSlice(maxy/2, maxy);
-    fitness += firstSlice.result();
+    QFuture<unsigned> slice1 = QtConcurrent::run(computeSlice, miny, maxy/4);
+    QFuture<unsigned> slice2 = QtConcurrent::run(computeSlice, maxy/4, 2*maxy/4);
+    QFuture<unsigned> slice3 = QtConcurrent::run(computeSlice, 2*maxy/4, 3*maxy/4);
+    unsigned fitness = computeSlice(3*maxy/4, maxy);
+    fitness += slice1.result();
+    fitness += slice2.result();
+    fitness += slice3.result();
 
     return fitness;
 }

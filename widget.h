@@ -5,6 +5,7 @@
 #include <QImage>
 #include <QVector>
 #include <QMenuBar>
+#include <stdint.h>
 
 #include "poly.h"
 
@@ -22,7 +23,7 @@ class Widget : public QWidget
 public:
     explicit Widget();
     ~Widget();
-    int computeFitness(QImage& target, QRect box=QRect());
+    static int computeFitness(const QImage& target, const QRect box=QRect());
     Poly genPoly(); // Creates a new random polygon
     static void drawPoly(QImage& target, Poly& poly);
     static void drawPoly(QImage& target, Poly& poly, QPainter& painter);
@@ -55,7 +56,7 @@ private:
     Ui::Widget *ui;
     QMenuBar *menuBar;
     QAction* startStopAction, *openAction, *cleanAction, *optimizeAction;
-    QImage pic;
+    static QImage pic;
     QImage generated;
     bool running;
     QVector<Poly> polys;
