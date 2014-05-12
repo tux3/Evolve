@@ -322,6 +322,8 @@ void Widget::optimizeShape(QImage& target, Poly& poly, bool redraw)
         // Instead of retrying other directions after one stops working
         // Call repeatedly to optimize further
         int direction;
+        int max,min,curPos,bestScore,bestPos;
+        bool betterL=false, betterU=false;
         for (direction=0; direction<4; direction++)
         {
             do
