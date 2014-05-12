@@ -1,6 +1,6 @@
 #include "widget.h"
 #include <QApplication>
-#include <QCommandLineParser>
+//#include <QCommandLineParser>
 
 QApplication* app;
 
@@ -9,6 +9,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     QCoreApplication::setApplicationName("Evolve");
     QCoreApplication::setApplicationVersion("1.2");
+    /*
     QCommandLineParser parser;
     parser.setApplicationDescription(QCoreApplication::translate("main","Polygon image evolver"));
     parser.addPositionalArgument("filename", QCoreApplication::translate("main", "Image file to imitate."));
@@ -20,6 +21,8 @@ int main(int argc, char *argv[])
     parser.addOption(outputFileOption);
     QCommandLineOption cliOnlyOption(QStringList() << "c" << "cli-only", QCoreApplication::translate("main", "Don't display gui."));
     parser.addOption(cliOnlyOption);
+    */
+
     app = &a;
     Widget w;
     w.show();
