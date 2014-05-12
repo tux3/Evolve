@@ -7,6 +7,9 @@ Vectorizes images throught evolution of a DNA sequence.
 
 ![2014-05-10 18_29_45-edit release tux3_evolve](https://cloud.githubusercontent.com/assets/5155966/2936525/57be55bc-d860-11e3-9dd5-84735b18b517.jpg)
 
+![1399906492812](https://cloud.githubusercontent.com/assets/5155966/2949764/607d48b2-da12-11e3-88f7-4379ee5b30c0.jpg)
+
+
 Features
 ========
 - Import of PNG, GIF, JPG and BMP
