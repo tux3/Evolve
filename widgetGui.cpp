@@ -35,13 +35,12 @@ void Widget::openImageClicked()
     ui->imgOriginal->setPixmap(QPixmap::fromImage(pic));
 
     // Update our data
-    height = pic.height();
     width = pic.width();
+    height = pic.height();
 
     // Create a blank pic the size of the original
-    generated = QImage(pic.width(), pic.height(), QImage::Format_ARGB32);
+    generated = QImage(width, height, QImage::Format_ARGB32);
     generated.fill(QColor(255,255,255));
-    generated = generated.convertToFormat(QImage::Format_ARGB32);
     ui->imgBest->setPixmap(QPixmap::fromImage(generated));
 
     FOCUS_LEFT=0;
@@ -52,9 +51,9 @@ void Widget::openImageClicked()
     generation = 0;
     ui->generationLabel->setNum(0);
     ui->polysLabel->setNum(0);
+    polys.clear();
     fitness = computeFitness(generated);
     updateGuiFitness();
-    polys.clear();
     file.close();
 }
 

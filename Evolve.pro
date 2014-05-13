@@ -19,7 +19,8 @@ SOURCES += main.cpp\
     settingswidget.cpp \
     settings.cpp \
     widgetGui.cpp \
-    mutation.cpp
+    mutation.cpp \
+    optimize.cpp
 
 HEADERS  += widget.h \
     poly.h \

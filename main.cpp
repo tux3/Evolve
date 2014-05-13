@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
  * We just need to be careful in optimizeShape since the bounding box's dimensions change every iteration
  * Most everywhere else we can just compute the bounding box once at the start.
  *
- * Apply optimizeShape's redraw optimizations to optimizeColor
+ * Isn't there a way to processEvents in another thread ?
  *
  * For computeFitness precompute the original.
  * When we load the original pic, immediatly create 3 arrays for the R, G, and B of each pixel.

@@ -25,8 +25,6 @@ public:
     ~Widget();
     static int computeFitness(const QImage& target, const QRect box=QRect());
     Poly genPoly(); // Creates a new random polygon
-    static void drawPoly(QImage& target, Poly& poly);
-    static void drawPoly(QImage& target, Poly& poly, QPainter& painter);
     QImage predraw(int polyIndex);
     void redraw(QImage& target);
     void optimizeColors(int polyIndex); // Will update generated directly
