@@ -213,6 +213,9 @@ void Widget::focusClicked()
 
 bool Widget::eventFilter(QObject *object, QEvent *event)
 {
+    if (pic.isNull())
+        return false;
+
     static bool pressed = false; // Is the left mouse button pressed
     static QPoint startCoords;
     if (object == ui->imgOriginal && event->type() == QEvent::MouseButtonPress)

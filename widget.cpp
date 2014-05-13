@@ -120,11 +120,11 @@ int Widget::computeFitness(const QImage& target, const QRect box)
 
 void Widget::run()
 {
-    int polysSize = polys.size();
-
     // Main loop
     while (running)
     {
+        int polysSize = polys.size();
+
         // Lower the number of points progressively to get more details
         if (polysSize == 25 && SettingsWidget::isDefaultConfig)
             N_POLY_POINTS = 5;
@@ -132,37 +132,37 @@ void Widget::run()
             N_POLY_POINTS = 4;
 
         // Always keep a minimum number of polys
-        while (polysSize < POLYS_MIN)
+        if (polysSize < POLYS_MIN && polysSize < POLYS_MAX)
         {
-            if (!running)
-                return;
-            else
-                tryAddPoly();
+            tryAddPoly();
+            continue;
         }
 
         // Mutate
-        if (qrand()%100 < POLYS_ADD_RATE)
+        if (qrand()%100 < POLYS_ADD_RATE && polysSize < POLYS_MAX)
             tryAddPoly(); // Will modify generated directly if it suceeds
 
         QImage newGen = generated;
+        QVector<Poly> polysNew = polys;
 
-        if (qrand()%100 < POLYS_REMOVE_RATE)
-            removePoly(newGen);
+        if (qrand()%100 < POLYS_REMOVE_RATE && polysSize > POLYS_MIN)
+            removePoly(polysNew);
 
         if (qrand()%100 < POLYS_REORDER_RATE)
-            reorderPoly(newGen);
+            reorderPoly(polysNew);
 
         // Keep improvements
         int newFit = computeFitness(newGen);
         if (newFit <= fitness)
         {
+            polys = polysNew;
             generated = newGen;
             fitness = newFit;
             updateGuiFitness();
-            ui->polysLabel->setNum(polys.size());
         }
         generation++;
         ui->generationLabel->setNum(generation);
+        ui->polysLabel->setNum(polys.size());
         app->processEvents();
     }
 }

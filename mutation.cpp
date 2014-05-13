@@ -27,12 +27,16 @@ void Widget::tryAddPoly()
     }
 }
 
-void Widget::removePoly(QImage &target)
+void Widget::removePoly(QVector<Poly>& newPolys)
 {
-    // TODO !
+    int index = qrand()%newPolys.size();
+    newPolys.remove(index);
 }
 
-void Widget::reorderPoly(QImage& target)
+void Widget::reorderPoly(QVector<Poly>& newPolys)
 {
-    // TODO !
+    int source = qrand()%newPolys.size();
+    int dest = qrand()%newPolys.size();
+    Poly poly = newPolys.takeAt(source);
+    newPolys.insert(dest, poly);
 }
