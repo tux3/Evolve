@@ -10,7 +10,7 @@ int N_CORES = 4;
 
 int FOCUS_LEFT=0, FOCUS_RIGHT=100, FOCUS_TOP=0, FOCUS_BOTTOM=100;
 
-int POLYS_MIN=5, POLYS_MAX=100;
+int POLYS_MIN=5, POLYS_MAX=150000;
 
 // Rates of mutation in % of odds per generation
 int POLYS_ADD_RATE=20;
