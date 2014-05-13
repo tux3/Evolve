@@ -120,26 +120,77 @@ int Widget::computeFitness(const QImage& target, const QRect box)
 
 void Widget::run()
 {
+    int polysSize = polys.size();
+
     // Main loop
     while (running)
     {
-        int polysSize = polys.size();
-
-        // Lower the number of points to get more details
+        // Lower the number of points progressively to get more details
         if (polysSize == 25 && SettingsWidget::isDefaultConfig)
             N_POLY_POINTS = 5;
         else if (polysSize == 75 && SettingsWidget::isDefaultConfig)
             N_POLY_POINTS = 4;
 
-        tryAddPoly();
+        // Always keep a minimum number of polys
+        while (polysSize < POLYS_MIN)
+        {
+            if (!running)
+                return;
+            else
+                tryAddPoly();
+        }
 
+        // Mutate
+        if (qrand()%100 < POLYS_ADD_RATE)
+            tryAddPoly(); // Will modify generated directly if it suceeds
+
+        QImage newGen = generated;
+
+        if (qrand()%100 < POLYS_REMOVE_RATE)
+            removePoly(newGen);
+
+        if (qrand()%100 < POLYS_REORDER_RATE)
+            reorderPoly(newGen);
+
+        // Keep improvements
+        int newFit = computeFitness(newGen);
+        if (newFit <= fitness)
+        {
+            generated = newGen;
+            fitness = newFit;
+            updateGuiFitness();
+            ui->polysLabel->setNum(polys.size());
+        }
         generation++;
         ui->generationLabel->setNum(generation);
         app->processEvents();
     }
 }
 
-QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)
+QImage Widget::predraw(int polyIndex)
+{
+    QImage predrawn(width, height, QImage::Format_ARGB32);
+    predrawn.fill(Qt::white);
+    static QBrush brush(Qt::SolidPattern);
+    QPainter painter(&predrawn);
+    painter.setPen(QPen(Qt::NoPen));
+    for (int i=0; i<polyIndex; ++i)
+    {
+        brush.setColor(polys[polyIndex].color);
+        painter.setBrush(brush);
+        painter.drawPolygon(polys[polyIndex].points.data(), polys[polyIndex].points.size());
+    }
+    painter.end();
+    return predrawn;
+}
+
+void Widget::optimizeColors(int polyIndex)
+{
+    QImage predrawn = predraw(polyIndex);
+    optimizeColors(polyIndex, predrawn);
+}
+
+void Widget::optimizeColors(int polyIndex, QImage& predrawn)
 {
     /*
     // Find the poly's bounding box
@@ -156,14 +207,22 @@ QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)
     QRect box(minx, miny, maxx-minx, maxy-miny);
     */
 
+    int polysSize = polys.size();
+    Poly& poly = polys[polyIndex];
+    static QBrush brush(Qt::SolidPattern);
+
     // Check if the pic is better, commit and return if it is
     auto validate = [&]()
     {
-        QImage newGen = target;
-        if (redraw)
-            this->redraw(newGen);
-        else
-            drawPoly(newGen, poly);
+        QImage newGen = predrawn;
+        QPainter painter(&newGen);
+        painter.setPen(QPen(Qt::NoPen));
+        for (int i=polyIndex; i<polysSize; ++i)
+        {
+            brush.setColor(polys[i].color);
+            painter.setBrush(brush);
+            painter.drawPolygon(polys[i].points.data(), polys[i].points.size());
+        }
         int newFit = computeFitness(newGen);
         generation++;
         ui->generationLabel->setNum(generation);
@@ -220,51 +279,31 @@ QColor Widget::optimizeColors(QImage& target, Poly& poly, bool redraw)
         } while (validate());
     }
     app->processEvents();
-    return poly.color;
 }
 
-void Widget::optimizeShape(QImage& target, Poly& poly, bool redraw)
+void Widget::optimizeShape(int polyIndex)
 {
-    int polyIndex=0;
-    QImage predraw(width, height, QImage::Format_ARGB32);
-    if (redraw)
-    {
-        // Precompute the image of all the polys before this one
-        predraw.fill(Qt::white);
-        static QBrush brush(Qt::SolidPattern);
-        QPainter painter(&predraw);
-        painter.setPen(QPen(Qt::NoPen));
-        polyIndex = polys.indexOf(poly);
-        for (int i=0; i<polyIndex; ++i)
-        {
-            brush.setColor(polys[polyIndex].color);
-            painter.setBrush(brush);
-            painter.drawPolygon(polys[polyIndex].points.data(), polys[polyIndex].points.size());
-        }
-        app->processEvents();
-    }
+    QImage predrawn = predraw(polyIndex);
+    optimizeShape(polyIndex, predrawn);
+}
+
+void Widget::optimizeShape(int polyIndex, QImage& predrawn)
+{
+    int polysSize = polys.size();
+    Poly& poly = polys[polyIndex];
+    static QBrush brush(Qt::SolidPattern);
 
     // Check if the pic is better, commit and return if it is
     auto validate = [&]()
     {
-        QImage newGen;
-        if (redraw)
+        QImage newGen = predrawn;
+        QPainter painter(&newGen);
+        painter.setPen(QPen(Qt::NoPen));
+        for (int i=polyIndex; i<polysSize; ++i)
         {
-            newGen = predraw;
-            static QBrush brush(Qt::SolidPattern);
-            QPainter painter(&predraw);
-            painter.setPen(QPen(Qt::NoPen));
-            for (int i=polyIndex; i<polys.size(); ++i)
-            {
-                brush.setColor(polys[polyIndex].color);
-                painter.setBrush(brush);
-                painter.drawPolygon(polys[polyIndex].points.data(), polys[polyIndex].points.size());
-            }
-        }
-        else
-        {
-            newGen = target;
-            drawPoly(newGen, poly);
+            brush.setColor(polys[i].color);
+            painter.setBrush(brush);
+            painter.drawPolygon(polys[i].points.data(), polys[i].points.size());
         }
         int newFit = computeFitness(newGen);
         generation++;
@@ -458,17 +497,19 @@ void Widget::optimizeDnaClicked()
     ui->btnStart->setText("Start");
     running = false;
 
+    int polysSize = polys.size();
+
     ProgressDialog progress;
-    progress.setMax(polys.size());
+    progress.setMax(polysSize);
     progress.show();
-    for (Poly& poly : polys)
+    for (int i=0; i<polysSize; ++i)
     {
         if (!progress.isVisible())
             break;
-        optimizeColors(generated, poly, true);
+        optimizeColors(i);
         if (!progress.isVisible())
             break;
-        optimizeShape(generated, poly, true);
+        optimizeShape(i);
         progress.increment();
         app->processEvents();
     }

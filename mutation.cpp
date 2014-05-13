@@ -10,18 +10,29 @@ void Widget::tryAddPoly()
     if (newFit < fitness)
     {
         // Update data
+        int polyPos = polys.size();
         polys.append(poly);
-        QImage clean = generated;
+        QImage predrawn = generated;
         generated = newGen;
 
         // Optimize
-        optimizeColors(clean, polys.last());
-        optimizeShape(clean, polys.last());
+        optimizeColors(polyPos, predrawn);
+        optimizeShape(polyPos, predrawn);
         fitness = computeFitness(generated);
 
         // Update GUI
         ui->imgBest->setPixmap(QPixmap::fromImage(generated));
-        ui->polysLabel->setNum(polys.size());
+        ui->polysLabel->setNum(polyPos+1);
         updateGuiFitness();
     }
+}
+
+void Widget::removePoly(QImage &target)
+{
+    // TODO !
+}
+
+void Widget::reorderPoly(QImage& target)
+{
+    // TODO !
 }

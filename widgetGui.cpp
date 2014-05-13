@@ -51,6 +51,7 @@ void Widget::openImageClicked()
 
     generation = 0;
     ui->generationLabel->setNum(0);
+    ui->polysLabel->setNum(0);
     fitness = computeFitness(generated);
     updateGuiFitness();
     polys.clear();

@@ -27,15 +27,21 @@ public:
     Poly genPoly(); // Creates a new random polygon
     static void drawPoly(QImage& target, Poly& poly);
     static void drawPoly(QImage& target, Poly& poly, QPainter& painter);
+    QImage predraw(int polyIndex);
     void redraw(QImage& target);
-    QColor optimizeColors(QImage& target, Poly& poly, bool redraw=false);
-    void optimizeShape(QImage& target, Poly& poly, bool redraw=false);
+    void optimizeColors(int polyIndex); // Will update generated directly
+    void optimizeColors(int polyIndex, QImage& predrawn); // Will update generated directly
+    void optimizeShape(int polyIndex); // Will update generated directly
+    void optimizeShape(int polyIndex, QImage& predrawn); // Will update generated directly
     void updateGuiFitness();
     void run(); // Run the vectorizer's main loop
     void setRunningGui();
     void setStoppedGui();
     bool virtual eventFilter(QObject *object, QEvent *event);
-    void tryAddPoly();
+    // Mutations
+    void tryAddPoly(); // Will gen one poly and add it to generated only if it improves fitness
+    void removePoly(QImage& target); // Will remove a poly, without testing if it improves fitness
+    void reorderPoly(QImage& target); // Will change the zorder of a poly, without testing if it improves fitness
 
 protected:
     void closeEvent(QCloseEvent *event);
