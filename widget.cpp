@@ -1,6 +1,5 @@
 #include "widget.h"
 #include "ui_widget.h"
-#include "progressdialog.h"
 #include "settings.h"
 #include "settingswidget.h"
 #include <QDataStream>
@@ -10,12 +9,12 @@
 #include <QPainter>
 #include <QRgb>
 #include <QtConcurrent/QtConcurrent>
-#include <QInputDialog>
 #include <ctime>
 
 unsigned Widget::height;
 unsigned Widget::width;
 QImage Widget::pic;
+QVector<Poly> Widget::polys;
 
 using namespace std;
 
@@ -118,55 +117,6 @@ int Widget::computeFitness(const QImage& target, const QRect box)
     return fitness;
 }
 
-void Widget::run()
-{
-    // Main loop
-    while (running)
-    {
-        int polysSize = polys.size();
-
-        // Lower the number of points progressively to get more details
-        if (polysSize == 25 && SettingsWidget::isDefaultConfig)
-            N_POLY_POINTS = 5;
-        else if (polysSize == 75 && SettingsWidget::isDefaultConfig)
-            N_POLY_POINTS = 4;
-
-        // Always keep a minimum number of polys
-        if (polysSize < POLYS_MIN && polysSize < POLYS_MAX)
-        {
-            tryAddPoly();
-            continue;
-        }
-
-        // Mutate
-        if (qrand()%100 < POLYS_ADD_RATE && polysSize < POLYS_MAX)
-            tryAddPoly(); // Will modify generated directly if it suceeds
-
-        QImage newGen = generated;
-        QVector<Poly> polysNew = polys;
-
-        if (qrand()%100 < POLYS_REMOVE_RATE && polysSize > POLYS_MIN)
-            removePoly(polysNew);
-
-        if (qrand()%100 < POLYS_REORDER_RATE)
-            reorderPoly(polysNew);
-
-        // Keep improvements
-        int newFit = computeFitness(newGen);
-        if (newFit <= fitness)
-        {
-            polys = polysNew;
-            generated = newGen;
-            fitness = newFit;
-            updateGuiFitness();
-        }
-        generation++;
-        ui->generationLabel->setNum(generation);
-        ui->polysLabel->setNum(polys.size());
-        app->processEvents();
-    }
-}
-
 QImage Widget::predraw(int polyIndex)
 {
     QImage predrawn(width, height, QImage::Format_ARGB32);
@@ -218,13 +168,13 @@ Poly Widget::genPoly()
     return poly;
 }
 
-void Widget::redraw(QImage& target)
+void Widget::redraw(QImage& target, QVector<Poly> &polyList)
 {
     static QBrush brush(Qt::SolidPattern);
     target.fill(Qt::white);
     QPainter painter(&target);
     painter.setPen(QPen(Qt::NoPen));
-    for (Poly& poly : polys)
+    for (Poly& poly : polyList)
     {
         brush.setColor(poly.color);
         painter.setBrush(brush);
@@ -232,107 +182,52 @@ void Widget::redraw(QImage& target)
     }
 }
 
-void Widget::cleanDnaClicked()
+void Widget::run()
 {
-    // Make sure we're the only one touching the polys
-    setRunningGui();
-    ui->btnStart->setEnabled(false);
-    startStopAction->setEnabled(false);
-    ui->btnStart->setText("Start");
-    running = false;
-    app->processEvents();
-
-    bool ok;
-    double thresholdPercent = QInputDialog::getDouble(this, "Clean DNA",
-                                       "Fitness threshold", 0.0001, 0, 100, 5, &ok);
-    unsigned worstFitness = width*height*3*255;
-    unsigned fitnessThreshold = thresholdPercent*((double)worstFitness)/100.0;
-
-    if (!ok)
+    // Main loop
+    while (running)
     {
-        setStoppedGui();
-        startStopAction->setEnabled(true);
-        ui->btnStart->setEnabled(true);
-        return;
-    }
+        int polysSize = polys.size();
 
-    ProgressDialog progress;
-    progress.setMax(polys.size());
-    progress.show();
+        // Lower the number of points progressively to get more details
+        if (polysSize == 25 && SettingsWidget::isDefaultConfig)
+            N_POLY_POINTS = 5;
+        else if (polysSize == 75 && SettingsWidget::isDefaultConfig)
+            N_POLY_POINTS = 4;
 
-    for (int i=0; i<polys.size();)
-    {
-        if (!progress.isVisible())
-            break;
-
-        progress.increment();
-        app->processEvents();
-        // Remove broken polys
-        for (QPoint& point : polys[i].points)
+        // Always keep a minimum number of polys
+        if (polysSize < POLYS_MIN && polysSize < POLYS_MAX)
         {
-            if (point.x() > (int)width || point.x() < 0
-                || point.y() > (int)height || point.y() < 0)
-            {
-                polys.remove(i);
-                generation++;
-                ui->generationLabel->setNum(generation);
-                break; // Go to the next poly
-            }
+            tryAddPoly();
+            continue;
         }
 
-        // Remove polys that don't change or worsen the fitness, or are under the threshold
-        QVector<Poly> polyBak = polys;
-        polys.remove(i);
-        redraw(generated);
-        unsigned newFit = computeFitness(generated);
-        if (newFit <= fitness + fitnessThreshold)
+        // Mutate
+        int oldFit = fitness; // Because tryAddPoly will change it directly
+        if (qrand()%100 < POLYS_ADD_RATE && polysSize < POLYS_MAX)
+            tryAddPoly(); // Will modify generated directly if it suceeds
+
+        QImage newGen = generated;
+        QVector<Poly> polysNew = polys;
+
+        if (qrand()%100 < POLYS_REMOVE_RATE && polysSize > POLYS_MIN)
+            removePoly(polysNew, newGen);
+
+        if (qrand()%100 < POLYS_REORDER_RATE)
+            reorderPoly(polysNew, newGen);
+
+        // Keep improvements
+        int newFit = computeFitness(newGen);
+        if (newFit <= oldFit)
         {
+            polys = polysNew;
+            generated = newGen;
             fitness = newFit;
-            generation++;
-            ui->generationLabel->setNum(generation);
             updateGuiFitness();
-            ui->imgBest->setPixmap(QPixmap::fromImage(generated));
-            ui->polysLabel->setNum(polys.size());
-            app->processEvents();
         }
-        else
-        {
-            polys = polyBak;
-            i++;
-        }
-
-    }
-    setStoppedGui();
-    startStopAction->setEnabled(true);
-    ui->btnStart->setEnabled(true);
-}
-
-void Widget::optimizeDnaClicked()
-{
-    setRunningGui();
-    ui->btnStart->setEnabled(false);
-    startStopAction->setEnabled(false);
-    ui->btnStart->setText("Start");
-    running = false;
-
-    int polysSize = polys.size();
-
-    ProgressDialog progress;
-    progress.setMax(polysSize);
-    progress.show();
-    for (int i=0; i<polysSize; ++i)
-    {
-        if (!progress.isVisible())
-            break;
-        optimizeColors(i);
-        if (!progress.isVisible())
-            break;
-        optimizeShape(i);
-        progress.increment();
+        generation++;
+        ui->generationLabel->setNum(generation);
+        ui->polysLabel->setNum(polys.size());
         app->processEvents();
     }
-
-    setStoppedGui();
-    startStopAction->setEnabled(true);
-    ui->btnStart->setEnabled(true);
 }

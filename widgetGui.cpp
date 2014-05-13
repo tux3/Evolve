@@ -2,6 +2,7 @@
 #include "ui_widget.h"
 #include "settingswidget.h"
 #include "settings.h"
+#include "progressdialog.h"
 #include <QMessageBox>
 #include <QCloseEvent>
 #include <QFileDialog>
@@ -11,6 +12,7 @@
 #include <QThreadPool>
 #include <QDebug>
 #include <QMouseEvent>
+#include <QInputDialog>
 
 using namespace std;
 
@@ -184,6 +186,113 @@ void Widget::githubClicked()
     QMessageBox::information(this,"GitHub","http://github.com/tux3/Evolve");
 #endif
 }
+
+void Widget::optimizeDnaClicked()
+{
+    setRunningGui();
+    ui->btnStart->setEnabled(false);
+    startStopAction->setEnabled(false);
+    ui->btnStart->setText("Start");
+    running = false;
+
+    int polysSize = polys.size();
+
+    ProgressDialog progress;
+    progress.setMax(polysSize);
+    progress.show();
+    for (int i=0; i<polysSize; ++i)
+    {
+        if (!progress.isVisible())
+            break;
+        optimizeColors(i);
+        if (!progress.isVisible())
+            break;
+        optimizeShape(i);
+        progress.increment();
+        app->processEvents();
+    }
+
+    setStoppedGui();
+    startStopAction->setEnabled(true);
+    ui->btnStart->setEnabled(true);
+}
+
+void Widget::cleanDnaClicked()
+{
+    // Make sure we're the only one touching the polys
+    setRunningGui();
+    ui->btnStart->setEnabled(false);
+    startStopAction->setEnabled(false);
+    ui->btnStart->setText("Start");
+    running = false;
+    app->processEvents();
+
+    bool ok;
+    double thresholdPercent = QInputDialog::getDouble(this, "Clean DNA",
+                                       "Fitness threshold", 0.0001, 0, 100, 5, &ok);
+    unsigned worstFitness = width*height*3*255;
+    unsigned fitnessThreshold = thresholdPercent*((double)worstFitness)/100.0;
+
+    if (!ok)
+    {
+        setStoppedGui();
+        startStopAction->setEnabled(true);
+        ui->btnStart->setEnabled(true);
+        return;
+    }
+
+    ProgressDialog progress;
+    progress.setMax(polys.size());
+    progress.show();
+
+    for (int i=0; i<polys.size();)
+    {
+        if (!progress.isVisible())
+            break;
+
+        progress.increment();
+        app->processEvents();
+        // Remove broken polys
+        for (QPoint& point : polys[i].points)
+        {
+            if (point.x() > (int)width || point.x() < 0
+                || point.y() > (int)height || point.y() < 0)
+            {
+                polys.remove(i);
+                generation++;
+                ui->generationLabel->setNum(generation);
+                break; // Go to the next poly
+            }
+        }
+
+        // Remove polys that don't change or worsen the fitness, or are under the threshold
+        QVector<Poly> polyBak = polys;
+        polys.remove(i);
+        redraw(generated);
+        unsigned newFit = computeFitness(generated);
+        if (newFit <= fitness + fitnessThreshold)
+        {
+            fitness = newFit;
+            generation++;
+            ui->generationLabel->setNum(generation);
+            updateGuiFitness();
+            ui->imgBest->setPixmap(QPixmap::fromImage(generated));
+            ui->polysLabel->setNum(polys.size());
+            app->processEvents();
+        }
+        else
+        {
+            polys = polyBak;
+            i++;
+        }
+
+    }
+    setStoppedGui();
+    startStopAction->setEnabled(true);
+    ui->btnStart->setEnabled(true);
+}
+
+
 
 void Widget::setRunningGui()
 {
