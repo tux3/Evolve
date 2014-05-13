@@ -189,12 +189,6 @@ void Widget::run()
     {
         int polysSize = polys.size();
 
-        // Lower the number of points progressively to get more details
-        if (polysSize == 25 && SettingsWidget::isDefaultConfig)
-            N_POLY_POINTS = 5;
-        else if (polysSize == 75 && SettingsWidget::isDefaultConfig)
-            N_POLY_POINTS = 4;
-
         // Always keep a minimum number of polys
         if (polysSize < POLYS_MIN && polysSize < POLYS_MAX)
         {
@@ -202,32 +196,72 @@ void Widget::run()
             continue;
         }
 
-        // Mutate
+        // Mutate polygons
         int oldFit = fitness; // Because tryAddPoly will change it directly
         if (qrand()%100 < POLYS_ADD_RATE && polysSize < POLYS_MAX)
             tryAddPoly(); // Will modify generated directly if it suceeds
 
         QImage newGen = generated;
         QVector<Poly> polysNew = polys;
+        bool dirty=false;
 
         if (qrand()%100 < POLYS_REMOVE_RATE && polysSize > POLYS_MIN)
-            removePoly(polysNew, newGen);
+        {
+            removePoly(polysNew);
+            dirty=true;
+        }
 
         if (qrand()%100 < POLYS_REORDER_RATE)
-            reorderPoly(polysNew, newGen);
-
-        // Keep improvements
-        int newFit = computeFitness(newGen);
-        if (newFit <= oldFit)
         {
-            polys = polysNew;
-            generated = newGen;
-            fitness = newFit;
-            updateGuiFitness();
+            reorderPoly(polysNew);
+            dirty=true;
+        }
+
+        if (dirty)
+        {
+            // Keep polys improvements
+            redraw(newGen, polysNew);
+            int newFit = computeFitness(newGen);
+            if (newFit <= oldFit)
+            {
+                polys = polysNew;
+                generated = newGen;
+                fitness = newFit;
+                updateGuiFitness();
+                ui->polysLabel->setNum(polys.size());
+            }
         }
         generation++;
         ui->generationLabel->setNum(generation);
-        ui->polysLabel->setNum(polys.size());
+        app->processEvents();
+
+        // Mutate points separately
+        // (it's unlikely that changing both the polys and a random point will help)
+        newGen = generated;
+        polysNew = polys;
+        dirty = false;
+
+        if (qrand()%100 < POINT_MOVE_RATE)
+        {
+            movePoint(polysNew);
+            dirty = true;
+        }
+
+        if (dirty)
+        {
+            // Keep points improvements
+            redraw(newGen, polysNew);
+            int newFit = computeFitness(newGen);
+            if (newFit <= oldFit)
+            {
+                polys = polysNew;
+                generated = newGen;
+                fitness = newFit;
+                updateGuiFitness();
+            }
+        }
+        generation++;
+        ui->generationLabel->setNum(generation);
         app->processEvents();
     }
 }
