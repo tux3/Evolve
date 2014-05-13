@@ -35,6 +35,7 @@ public:
     void setRunningGui();
     void setStoppedGui();
     bool virtual eventFilter(QObject *object, QEvent *event);
+    void tryAddPoly();
 
 protected:
     void closeEvent(QCloseEvent *event);

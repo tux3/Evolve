@@ -120,9 +120,6 @@ int Widget::computeFitness(const QImage& target, const QRect box)
 
 void Widget::run()
 {
-    unsigned worstFitness = width*height*3*255;
-    int fitnessThreshold = 0.00005*((double)worstFitness)/100.0;
-
     // Main loop
     while (running)
     {
@@ -134,39 +131,11 @@ void Widget::run()
         else if (polysSize == 75 && SettingsWidget::isDefaultConfig)
             N_POLY_POINTS = 4;
 
-        if (SHAPE_OPT_FREQ != 0 && polysSize > 10 && qrand()%SHAPE_OPT_FREQ == 0)
-        {
-            int i = qrand()%polysSize;
-            optimizeShape(generated, polys[i], true);
-            app->processEvents();
-        }
-        else
-        {
-            Poly poly = genPoly();
-            QImage newGen = generated;
-            drawPoly(newGen, poly);
-            generation++;
-            int newFit = computeFitness(newGen);
-            if (newFit + fitnessThreshold < fitness)
-            {
-                // Update data
-                polys.append(poly);
-                QImage clean = generated;
-                generated = newGen;
+        tryAddPoly();
 
-                // Optimize
-                optimizeColors(clean, polys.last());
-                //optimizeShape(clean, polys.last());
-                fitness = computeFitness(generated);
-
-                // Update GUI
-                ui->imgBest->setPixmap(QPixmap::fromImage(generated));
-                ui->polysLabel->setNum(polys.size());
-                updateGuiFitness();
-            }
-            ui->generationLabel->setNum(generation);
-            app->processEvents();
-        }
+        generation++;
+        ui->generationLabel->setNum(generation);
+        app->processEvents();
     }
 }
 
