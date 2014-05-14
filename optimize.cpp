@@ -32,7 +32,7 @@ void Widget::optimizeColors(int polyIndex, QImage& predrawn)
     int polysSize = polys.size();
     Poly& poly = polys[polyIndex];
     static QBrush brush(Qt::SolidPattern);
-    int processEventsRatelimit = 0;
+    unsigned processEventsRatelimit = 0;
 
     // Check if the pic is better, commit and return if it is
     auto validate = [&]()
@@ -44,7 +44,11 @@ void Widget::optimizeColors(int polyIndex, QImage& predrawn)
         {
             brush.setColor(polys[i].color);
             painter.setBrush(brush);
-            painter.drawPolygon(polys[i].points.data(), polys[i].points.size());
+#if (useConvexPolys)
+    painter.drawConvexPolygon(polys[i].points.data(), polys[i].points.size());
+#else
+    painter.drawPolygon(polys[i].points.data(), polys[i].points.size());
+#endif
         }
         int newFit = computeFitness(newGen);
         generation++;
@@ -86,21 +90,21 @@ void Widget::optimizeColors(int polyIndex, QImage& predrawn)
             else if (targetColor == 1)
                 color = color.darker(110); // Darker
             else if (targetColor == 2)
-                color.setRed(min(color.red()+N_COLOR_VAR,255)); // More red
+                color.setRed(min(color.red()+(int)N_COLOR_VAR,255)); // More red
             else if (targetColor == 3)
-                color.setBlue(max(color.blue()-N_COLOR_VAR,0)); // Less blue
+                color.setBlue(max(color.blue()-(int)N_COLOR_VAR,0)); // Less blue
             else if (targetColor == 4)
-                color.setGreen(min(color.green()+N_COLOR_VAR,255)); // More green
+                color.setGreen(min(color.green()+(int)N_COLOR_VAR,255)); // More green
             else if (targetColor == 5)
-                color.setRed(max(color.red()-N_COLOR_VAR,0)); // Less red
+                color.setRed(max(color.red()-(int)N_COLOR_VAR,0)); // Less red
             else if (targetColor == 6)
-                color.setBlue(min(color.blue()+N_COLOR_VAR,255)); // More blue
+                color.setBlue(min(color.blue()+(int)N_COLOR_VAR,255)); // More blue
             else if (targetColor == 7)
-                color.setGreen(max(color.green()-N_COLOR_VAR,0)); // Less green
+                color.setGreen(max(color.green()-(int)N_COLOR_VAR,0)); // Less green
             else if (targetColor == 8)
-                color.setAlpha(max(color.alpha()-N_COLOR_VAR,0)); // Less alpha
+                color.setAlpha(max(color.alpha()-(int)N_COLOR_VAR,0)); // Less alpha
             else if (targetColor == 9 && OPT_INCREASE_ALPHA)
-                color.setAlpha(min(color.alpha()+N_COLOR_VAR,255)); // More alpha
+                color.setAlpha(min(color.alpha()+(int)N_COLOR_VAR,255)); // More alpha
             poly.color = color;
         } while (validate());
     }
@@ -129,7 +133,11 @@ void Widget::optimizeShape(int polyIndex, QImage& predrawn)
         {
             brush.setColor(polys[i].color);
             painter.setBrush(brush);
-            painter.drawPolygon(polys[i].points.data(), polys[i].points.size());
+#if (useConvexPolys)
+    painter.drawConvexPolygon(polys[i].points.data(), polys[i].points.size());
+#else
+    painter.drawPolygon(polys[i].points.data(), polys[i].points.size());
+#endif
         }
         int newFit = computeFitness(newGen);
         generation++;
@@ -150,7 +158,7 @@ void Widget::optimizeShape(int polyIndex, QImage& predrawn)
     };
 
     app->processEvents();
-    int processEventsRatelimit = 0;
+    unsigned processEventsRatelimit = 0;
     for (QPoint& point : poly.points)
     {
         // Only try once each directions until they stop working
@@ -170,13 +178,13 @@ void Widget::optimizeShape(int polyIndex, QImage& predrawn)
                     processEventsRatelimit++;
 
                 if (direction==0)
-                    point.setY(max(point.y()-N_POS_VAR,0));
+                    point.setY(max(point.y()-(int)N_POS_VAR,0));
                 else if (direction==1)
-                    point.setX(min((unsigned)point.x()+N_POS_VAR, width));
+                    point.setX(min((unsigned)point.x()+(int)N_POS_VAR, width));
                 else if (direction==2)
-                    point.setY(min((unsigned)point.y()+N_POS_VAR, height));
+                    point.setY(min((unsigned)point.y()+(int)N_POS_VAR, height));
                 else if (direction==3)
-                    point.setX(max(point.x()-N_POS_VAR,0));
+                    point.setX(max(point.x()-(int)N_POS_VAR,0));
             } while (validate());
         }
     }

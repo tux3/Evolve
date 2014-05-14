@@ -12,7 +12,11 @@ void Poly::drawPoly(QImage& target, Poly& poly)
     painter.setPen(QPen(Qt::NoPen));
     brush.setColor(poly.color);
     painter.setBrush(brush);
+#if (useConvexPolys)
+    painter.drawConvexPolygon(poly.points.data(), poly.points.size());
+#else
     painter.drawPolygon(poly.points.data(), poly.points.size());
+#endif
 }
 
 

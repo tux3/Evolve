@@ -9,7 +9,6 @@
 
 #include "poly.h"
 
-
 extern QApplication* app;
 
 namespace Ui {

@@ -3,6 +3,7 @@
 #include "settingswidget.h"
 #include "settings.h"
 #include "progressdialog.h"
+#include "stats.h"
 #include <QMessageBox>
 #include <QCloseEvent>
 #include <QFileDialog>
@@ -86,8 +87,8 @@ void Widget::importDnaClicked()
     in >> polys;
     file.close();
 
-    POLYS_MIN = min(POLYS_MIN, polys.size());
-    POLYS_MAX = min(POLYS_MAX, polys.size());
+    POLYS_MIN = min(POLYS_MIN, (unsigned)polys.size());
+    POLYS_MAX = min(POLYS_MAX, (unsigned)polys.size());
 
     if (dnaWidth != width || dnaHeight != height)
     {
@@ -143,7 +144,11 @@ void Widget::saveSVGClicked()
         QBrush brush(poly.color);
         brush.setStyle(Qt::SolidPattern);
         painter.setBrush(brush);
-        painter.drawPolygon(poly.points.data(), poly.points.size());
+#if (useConvexPolys)
+    painter.drawConvexPolygon(poly.points.data(), poly.points.size());
+#else
+    painter.drawPolygon(poly.points.data(), poly.points.size());
+#endif
     }
     painter.end();
 }
@@ -392,4 +397,17 @@ bool Widget::eventFilter(QObject *object, QEvent *event)
             FOCUS_BOTTOM = FOCUS_TOP+1;
     }
     return false;
+}
+
+void Widget::statsClicked()
+{
+    QString text = "Add poly : %0% (%1/%2)\nRemove poly : %3% (%4/%5)\nReorder poly : %6% (%7/%8)\n";
+    text = text.arg((float)STAT_POLY_ADD_OK/STAT_POLY_ADD*100).arg(STAT_POLY_ADD_OK).arg(STAT_POLY_ADD)
+            .arg((float)STAT_POLY_REMOVE_OK/STAT_POLY_REMOVE*100).arg(STAT_POLY_REMOVE_OK).arg(STAT_POLY_REMOVE)
+            .arg((float)STAT_POLY_REORDER_OK/STAT_POLY_REORDER*100).arg(STAT_POLY_REORDER_OK).arg(STAT_POLY_REORDER);
+    text += "Move point (max) : %0% (%1/%2)\nMove point (med) : %3% (%4/%5)\nMove point (min) : %6% (%7/%8)";
+    text = text.arg((float)STAT_POINT_MOVE_MAX_OK/STAT_POINT_MOVE_MAX*100).arg(STAT_POINT_MOVE_MAX_OK).arg(STAT_POINT_MOVE_MAX)
+            .arg((float)STAT_POINT_MOVE_MED_OK/STAT_POINT_MOVE_MED*100).arg(STAT_POINT_MOVE_MED_OK).arg(STAT_POINT_MOVE_MED)
+            .arg((float)STAT_POINT_MOVE_MIN_OK/STAT_POINT_MOVE_MIN*100).arg(STAT_POINT_MOVE_MIN_OK).arg(STAT_POINT_MOVE_MIN);
+    QMessageBox::information(this, "Stats", text);
 }

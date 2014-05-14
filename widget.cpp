@@ -44,6 +44,7 @@ Widget::Widget() :
     QMenu* helpMenu = menuBar->addMenu(tr("&?"));
     helpMenu->addAction("&Focus", this, SLOT(focusClicked()));
     helpMenu->addAction("&GitHub page", this, SLOT(githubClicked()));
+    helpMenu->addAction("&Stats", this, SLOT(statsClicked()));
     ui->gridLayout->addWidget(menuBar,0,0,1,4);
     menuBar->setFixedHeight(22);
 
@@ -109,11 +110,11 @@ unsigned Widget::computeFitness(const QImage& target, const QRect box)
         return partFitness;
     };
     QFuture<unsigned> slices[N_CORES];
-    for (int i=0; i < N_CORES; i++){
+    for (unsigned i=0; i < N_CORES; i++){
         slices[i] = QtConcurrent::run(computeSlice, miny+(maxy/N_CORES) *i, (maxy/N_CORES) * (i+1));
     }
     unsigned fullFitness=0;
-    for (int i=0; i < N_CORES; i++)
+    for (unsigned i=0; i < N_CORES; i++)
         fullFitness+=slices[i].result();
     return fullFitness;
 }
@@ -130,6 +131,11 @@ QImage Widget::predraw(int polyIndex)
         brush.setColor(polys[polyIndex].color);
         painter.setBrush(brush);
         painter.drawPolygon(polys[polyIndex].points.data(), polys[polyIndex].points.size());
+#if (useConvexPolys)
+    painter.drawConvexPolygon(polys[polyIndex].points.data(), polys[polyIndex].points.size());
+#else
+    painter.drawPolygon(polys[polyIndex].points.data(), polys[polyIndex].points.size());
+#endif
     }
     painter.end();
     return predrawn;
@@ -138,7 +144,7 @@ QImage Widget::predraw(int polyIndex)
 Poly Widget::genPoly()
 {
     Poly poly;
-    for (int i=0; i<N_POLY_POINTS; i++)
+    for (unsigned i=0; i<N_POLY_POINTS; i++)
     {
         quint16 x,y;
         int wMod = (int)(((float)width*(float)(FOCUS_RIGHT-FOCUS_LEFT))/100.0);
@@ -178,7 +184,11 @@ void Widget::redraw(QImage& target, QVector<Poly> &polyList)
     {
         brush.setColor(poly.color);
         painter.setBrush(brush);
-        painter.drawPolygon(poly.points.data(), poly.points.size());
+#if (useConvexPolys)
+    painter.drawConvexPolygon(poly.points.data(), poly.points.size());
+#else
+    painter.drawPolygon(poly.points.data(), poly.points.size());
+#endif
     }
 }
 
@@ -209,7 +219,7 @@ void Widget::run()
     // Main loop
     while (running)
     {
-        int polysSize = polys.size();
+        unsigned polysSize = polys.size();
 
         // Always keep a minimum number of polys
         if (polysSize < POLYS_MIN && polysSize < POLYS_MAX)
@@ -220,60 +230,91 @@ void Widget::run()
 
         // Mutate polygons
         int oldFit = fitness; // Because tryAddPoly will change it directly
-        if (qrand()%POLYS_ADD_RATE==0 && polysSize < POLYS_MAX)
-        {
-            STAT_POLY_ADD++;
-            tryAddPoly(); // Will modify generated directly if it suceeds
-        }
+        polysSize=polys.size();
+        for (unsigned i=0; i<polysSize && (unsigned)polys.size() < POLYS_MAX; ++i)
+            if (qrand()%POLYS_ADD_RATE==0)
+                tryAddPoly(); // Will modify generated directly if it suceeds
 
-        QImage newGen = generated;
-        QVector<Poly> polysNew = polys;
-        bool dirty=false;
-        bool removedPoly=false, reorderedPoly=false;
+        QImage newGen;
+        QVector<Poly> polysNew;
 
-        if (qrand()%POLYS_REMOVE_RATE==0 && polysSize > POLYS_MIN)
+        polysSize=polys.size();
+        for (unsigned i=0; i<polysSize && (unsigned)polys.size() > POLYS_MIN; ++i)
         {
-            removedPoly=true;
-            STAT_POLY_REMOVE++;
-            removePoly(polysNew);
-            dirty=true;
-        }
-
-        if (qrand()%POLYS_REORDER_RATE==0)
-        {
-            reorderedPoly=true;
-            STAT_POLY_REORDER++;
-            reorderPoly(polysNew);
-            dirty=true;
-        }
-
-        if (dirty)
-        {
-            // Keep polys improvements
-            redraw(newGen, polysNew);
-            int newFit = computeFitness(newGen);
-            if (newFit <= oldFit)
+            bool dirty=false;
+            bool removedPoly=false;
+            newGen = generated;
+            polysNew = polys;
+            if (qrand()%POLYS_REMOVE_RATE==0 && polysSize > POLYS_MIN)
             {
-                polys = polysNew;
-                generated = newGen;
-                fitness = newFit;
-                updateGuiFitness();
-                ui->polysLabel->setNum(polys.size());
-                ui->imgBest->setPixmap(QPixmap::fromImage(generated));
-                if (removedPoly)
-                    STAT_POLY_REMOVE_OK++;
-                if (reorderedPoly)
-                    STAT_POLY_REORDER_OK++;
+                removedPoly=true;
+                STAT_POLY_REMOVE++;
+                removePoly(polysNew);
+                dirty=true;
             }
+
+            if (dirty)
+            {
+                // Keep polys improvements
+                redraw(newGen, polysNew);
+                int newFit = computeFitness(newGen);
+                if (newFit <= oldFit)
+                {
+                    polys = polysNew;
+                    generated = newGen;
+                    fitness = newFit;
+                    updateGuiFitness();
+                    ui->polysLabel->setNum(polys.size());
+                    ui->imgBest->setPixmap(QPixmap::fromImage(generated));
+                    if (removedPoly)
+                        STAT_POLY_REMOVE_OK++;
+                }
+            }
+            generation++;
+            ui->generationLabel->setNum(generation);
+            app->processEvents();
         }
-        generation++;
-        ui->generationLabel->setNum(generation);
-        app->processEvents();
+
+        for (unsigned i=0; i<polysSize; ++i)
+        {
+            newGen = generated;
+            polysNew = polys;
+            bool dirty = false;
+            bool reorderedPoly=false;
+            if (qrand()%POLYS_REORDER_RATE==0)
+            {
+                reorderedPoly=true;
+                STAT_POLY_REORDER++;
+                reorderPoly(polysNew);
+                dirty=true;
+            }
+
+            if (dirty)
+            {
+                // Keep polys improvements
+                redraw(newGen, polysNew);
+                int newFit = computeFitness(newGen);
+                if (newFit <= fitness)
+                {
+                    polys = polysNew;
+                    generated = newGen;
+                    fitness = newFit;
+                    updateGuiFitness();
+                    ui->polysLabel->setNum(polys.size());
+                    ui->imgBest->setPixmap(QPixmap::fromImage(generated));
+                    if (reorderedPoly)
+                        STAT_POLY_REORDER_OK++;
+                }
+            }
+            generation++;
+            ui->generationLabel->setNum(generation);
+            app->processEvents();
+        }
 
         // Mutate colors separately
         newGen = generated;
         polysNew = polys;
-        dirty = false;
+        bool dirty = false;
         unsigned polysNewSize = polysNew.size();
         for (unsigned i=0; i<polysNewSize; ++i)
         {

@@ -4,6 +4,7 @@
 
 void Widget::tryAddPoly()
 {
+    STAT_POLY_ADD++;
     Poly poly = genPoly();
     QImage newGen = generated;
     Poly::drawPoly(newGen, poly);
