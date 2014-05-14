@@ -40,7 +40,6 @@ public:
     void tryAddPoly(); // Will gen one poly and add it to generated only if it improves fitness
     static void removePoly(QVector<Poly>&); // Will remove a poly, without testing if it improves fitness
     static void reorderPoly(QVector<Poly>&); // Will change the zorder of a poly, without testing if it improves fitness
-    static void movePoint(QVector<Poly>&); // Will move a random point of a random poly
 
 protected:
     void closeEvent(QCloseEvent *event);

@@ -40,11 +40,3 @@ void Widget::reorderPoly(QVector<Poly>& newPolys)
     Poly poly = newPolys.takeAt(source);
     newPolys.insert(dest, poly);
 }
-
-void Widget::movePoint(QVector<Poly>& newPolys)
-{
-    Poly& poly = newPolys[ qrand() % (newPolys.size()) ];
-    QPoint point = poly.points[ qrand() % (poly.points.size()) ];
-    point.rx() = point.x() + qrand()%((int)(width*0.1));
-    point.ry() = point.y() + qrand()%((int)(height*0.1));
-}

@@ -62,13 +62,9 @@ int main(int argc, char *argv[])
  *
  * Isn't there a way to processEvents in another thread ?
  *
- * For computeFitness precompute the original.
- * When we load the original pic, immediatly create 3 arrays for the R, G, and B of each pixel.
- * It's probably faster to use one hueg contiguous array rather than a multidimentional, for each color.
- * We'll just use i*width+j with i*width computed out of the inner loop.
+ * An option for black, white and grey shades would also be cool.
  *
- * Maybe in computeFitness we could convert everything to RGB instead of RGBA, so we'd always have 0xFF for the A
- * And then blindly compute our difference of uint8_t, this way we might get vector instructions and unrolling.
+ * An option for the size of the pic would be good. It's unconvinient to save a svg with 50k polygons and open it in illustrator (takes forever to load).
  *
  * Stuff from EvoLisa :
  * Can add new polygons at a random zindex instead of always on top

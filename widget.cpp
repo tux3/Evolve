@@ -198,20 +198,20 @@ void Widget::run()
 
         // Mutate polygons
         int oldFit = fitness; // Because tryAddPoly will change it directly
-        if (qrand()%100 < POLYS_ADD_RATE && polysSize < POLYS_MAX)
+        if (qrand()%POLYS_ADD_RATE==0 && polysSize < POLYS_MAX)
             tryAddPoly(); // Will modify generated directly if it suceeds
 
         QImage newGen = generated;
         QVector<Poly> polysNew = polys;
         bool dirty=false;
 
-        if (qrand()%100 < POLYS_REMOVE_RATE && polysSize > POLYS_MIN)
+        if (qrand()%POLYS_REMOVE_RATE==0 && polysSize > POLYS_MIN)
         {
             removePoly(polysNew);
             dirty=true;
         }
 
-        if (qrand()%100 < POLYS_REORDER_RATE)
+        if (qrand()%POLYS_REORDER_RATE==0)
         {
             reorderPoly(polysNew);
             dirty=true;
@@ -229,6 +229,7 @@ void Widget::run()
                 fitness = newFit;
                 updateGuiFitness();
                 ui->polysLabel->setNum(polys.size());
+                ui->imgBest->setPixmap(QPixmap::fromImage(generated));
             }
         }
         generation++;
@@ -241,10 +242,34 @@ void Widget::run()
         polysNew = polys;
         dirty = false;
 
-        if (qrand()%100 < POINT_MOVE_RATE)
+
+        for (Poly& poly : polysNew)
         {
-            movePoint(polysNew);
-            dirty = true;
+            for (QPoint& point : poly.points)
+            {
+                if (qrand()%POINT_MOVE_MAX_RATE==0)
+                {
+                    point.rx() = qrand()%width;
+                    point.ry() = qrand()%height;
+                    dirty = true;
+                }
+                else if (qrand()%POINT_MOVE_MED_RATE==0)
+                {
+                    point.rx() += qrand()%(POINT_MOVE_MED_RANGE)-POINT_MOVE_MED_RANGE/2;
+                    point.rx() = min((unsigned)max(point.x(), 0), width);
+                    point.ry() += qrand()%(POINT_MOVE_MED_RANGE)-POINT_MOVE_MED_RANGE/2;
+                    point.ry() = min((unsigned)max(point.y(), 0), height);
+                    dirty = true;
+                }
+                else if (qrand()%POINT_MOVE_MIN_RATE==0)
+                {
+                    point.rx() += qrand()%(POINT_MOVE_MIN_RANGE)-POINT_MOVE_MIN_RANGE/2;
+                    point.rx() = min((unsigned)max(point.x(), 0), width);
+                    point.ry() += qrand()%(POINT_MOVE_MIN_RANGE)-POINT_MOVE_MIN_RANGE/2;
+                    point.ry() = min((unsigned)max(point.y(), 0), height);
+                    dirty = true;
+                }
+            }
         }
 
         if (dirty)
@@ -258,6 +283,7 @@ void Widget::run()
                 generated = newGen;
                 fitness = newFit;
                 updateGuiFitness();
+                ui->imgBest->setPixmap(QPixmap::fromImage(generated));
             }
         }
         generation++;
