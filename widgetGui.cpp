@@ -86,6 +86,9 @@ void Widget::importDnaClicked()
     in >> polys;
     file.close();
 
+    POLYS_MIN = min(POLYS_MIN, polys.size());
+    POLYS_MAX = min(POLYS_MAX, polys.size());
+
     if (dnaWidth != width || dnaHeight != height)
     {
         QMessageBox::critical(this,"Invalid image","The original image and the DNA have different dimentions");

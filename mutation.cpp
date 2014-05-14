@@ -1,5 +1,6 @@
 #include "widget.h"
 #include "ui_widget.h"
+#include "stats.h"
 
 void Widget::tryAddPoly()
 {
@@ -10,6 +11,7 @@ void Widget::tryAddPoly()
     if (newFit < fitness)
     {
         // Update data
+        STAT_POLY_ADD_OK++;
         int polyPos = polys.size();
         polys.append(poly);
         QImage predrawn = generated;

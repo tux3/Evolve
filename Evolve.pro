@@ -20,13 +20,15 @@ SOURCES += main.cpp\
     settings.cpp \
     widgetGui.cpp \
     mutation.cpp \
-    optimize.cpp
+    optimize.cpp \
+    stats.cpp
 
 HEADERS  += widget.h \
     poly.h \
     progressdialog.h \
     settingswidget.h \
-    settings.h
+    settings.h \
+    stats.h
 
 FORMS    += widget.ui \
     progressdialog.ui \

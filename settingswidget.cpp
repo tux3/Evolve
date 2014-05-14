@@ -21,9 +21,10 @@ SettingsWidget::SettingsWidget(QWidget *parent) :
     ui->focusRight->setValue(FOCUS_RIGHT);
     ui->focusTop->setValue(FOCUS_TOP);
     ui->focusBottom->setValue(FOCUS_BOTTOM);
-    ui->shapeOptFreqSpin->setValue(SHAPE_OPT_FREQ);
     ui->guiRefreshSpin->setValue(GUI_REFRESH_RATE);
     ui->coreSpin->setValue(N_CORES);
+    ui->minPolysSpin->setValue(POLYS_MIN);
+    ui->maxPolysSpin->setValue(POLYS_MAX);
 }
 
 SettingsWidget::~SettingsWidget()
@@ -46,6 +47,13 @@ void SettingsWidget::okClicked()
         return;
     }
 
+    if (ui->maxPolysSpin->value() < ui->minPolysSpin->value())
+    {
+        QMessageBox::critical(this, "Error", "Invalid polygon settings");
+        close();
+        return;
+    }
+
     isDefaultConfig = false;
 
     N_POLY_POINTS = ui->nPointsSpin->value();
@@ -55,8 +63,9 @@ void SettingsWidget::okClicked()
     FOCUS_RIGHT = ui->focusRight->value();
     FOCUS_TOP = ui->focusTop->value();
     FOCUS_BOTTOM = ui->focusBottom->value();
-    SHAPE_OPT_FREQ = ui->shapeOptFreqSpin->value();
     GUI_REFRESH_RATE = ui->guiRefreshSpin->value();
     N_CORES = ui->coreSpin->value();
+    POLYS_MIN = ui->minPolysSpin->value();
+    POLYS_MAX = ui->maxPolysSpin->value();
     close();
 }

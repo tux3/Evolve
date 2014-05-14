@@ -2,6 +2,7 @@
 #include "ui_widget.h"
 #include "settings.h"
 #include "settingswidget.h"
+#include "stats.h"
 #include <QDataStream>
 #include <QString>
 #include <QPixmap>
@@ -64,7 +65,7 @@ Widget::~Widget()
     exit(0);
 }
 
-int Widget::computeFitness(const QImage& target, const QRect box)
+unsigned Widget::computeFitness(const QImage& target, const QRect box)
 {
     unsigned minx, maxx, miny, maxy;
     if (box.isNull())
@@ -111,10 +112,10 @@ int Widget::computeFitness(const QImage& target, const QRect box)
     for (int i=0; i < N_CORES; i++){
         slices[i] = QtConcurrent::run(computeSlice, miny+(maxy/N_CORES) *i, (maxy/N_CORES) * (i+1));
     }
-	unsigned fitness=0;
+    unsigned fullFitness=0;
     for (int i=0; i < N_CORES; i++)
-        fitness+=slices[i].result();
-    return fitness;
+        fullFitness+=slices[i].result();
+    return fullFitness;
 }
 
 QImage Widget::predraw(int polyIndex)
@@ -183,6 +184,11 @@ void Widget::redraw(QImage& target, QVector<Poly> &polyList)
 
 bool Widget::isInFocus(const Poly& poly)
 {
+    if (FOCUS_LEFT == 0 && FOCUS_TOP == 0
+        && FOCUS_BOTTOM == 100 && FOCUS_RIGHT == 100)
+    {
+        return true;
+    }
     for (QPoint point : poly.points)
     {
         if ((unsigned)point.x() < FOCUS_LEFT*width/100
@@ -198,6 +204,8 @@ bool Widget::isInFocus(const Poly& poly)
 
 void Widget::run()
 {
+    qsrand(time(NULL)); // Just in case the user was having bad random, here's a way to reset
+
     // Main loop
     while (running)
     {
@@ -213,20 +221,28 @@ void Widget::run()
         // Mutate polygons
         int oldFit = fitness; // Because tryAddPoly will change it directly
         if (qrand()%POLYS_ADD_RATE==0 && polysSize < POLYS_MAX)
+        {
+            STAT_POLY_ADD++;
             tryAddPoly(); // Will modify generated directly if it suceeds
+        }
 
         QImage newGen = generated;
         QVector<Poly> polysNew = polys;
         bool dirty=false;
+        bool removedPoly=false, reorderedPoly=false;
 
         if (qrand()%POLYS_REMOVE_RATE==0 && polysSize > POLYS_MIN)
         {
+            removedPoly=true;
+            STAT_POLY_REMOVE++;
             removePoly(polysNew);
             dirty=true;
         }
 
         if (qrand()%POLYS_REORDER_RATE==0)
         {
+            reorderedPoly=true;
+            STAT_POLY_REORDER++;
             reorderPoly(polysNew);
             dirty=true;
         }
@@ -244,6 +260,10 @@ void Widget::run()
                 updateGuiFitness();
                 ui->polysLabel->setNum(polys.size());
                 ui->imgBest->setPixmap(QPixmap::fromImage(generated));
+                if (removedPoly)
+                    STAT_POLY_REMOVE_OK++;
+                if (reorderedPoly)
+                    STAT_POLY_REORDER_OK++;
             }
         }
         generation++;
@@ -254,8 +274,10 @@ void Widget::run()
         newGen = generated;
         polysNew = polys;
         dirty = false;
-        for (Poly& poly : polysNew)
+        unsigned polysNewSize = polysNew.size();
+        for (unsigned i=0; i<polysNewSize; ++i)
         {
+            Poly& poly = polysNew[i];
             if (!isInFocus(poly))
                 continue;
             if (qrand()%RED_CHANGE_RATE==0)
@@ -278,24 +300,28 @@ void Widget::run()
                 poly.color.setAlpha(qrand()%(ALPHA_MAX-ALPHA_MIN)+ALPHA_MIN);
                 dirty=true;
             }
-        }
-        if (dirty)
-        {
-            // Keep color improvements
-            redraw(newGen, polysNew);
-            int newFit = computeFitness(newGen);
-            if (newFit <= oldFit)
+            polysNew[i] = poly;
+            if (dirty)
             {
-                polys = polysNew;
-                generated = newGen;
-                fitness = newFit;
-                updateGuiFitness();
-                ui->imgBest->setPixmap(QPixmap::fromImage(generated));
+                // Keep color improvements
+                redraw(newGen, polysNew);
+                int newFit = computeFitness(newGen);
+                if (newFit <= fitness)
+                {
+                    polys[i] = poly;
+                    generated = newGen;
+                    fitness = newFit;
+                    updateGuiFitness();
+                    ui->imgBest->setPixmap(QPixmap::fromImage(generated));
+                }
+                else
+                    polysNew[i] = polys[i];
+                dirty = false;
             }
+            generation++;
+            ui->generationLabel->setNum(generation);
+            app->processEvents();
         }
-        generation++;
-        ui->generationLabel->setNum(generation);
-        app->processEvents();
 
         // Mutate points separately
         // (it's unlikely that changing both the polys and a random point will help)
@@ -303,10 +329,13 @@ void Widget::run()
         polysNew = polys;
         dirty = false;
 
-        for (Poly& poly : polysNew)
+        polysNewSize = polysNew.size();
+        for (unsigned i=0; i<polysNewSize; ++i)
         {
+            Poly& poly = polysNew[i];
             if (!isInFocus(poly))
                 continue;
+            int movedPointMin=0, movedPointMed=0, movedPointMax=0;
             for (QPoint& point : poly.points)
             {
                 if (qrand()%POINT_MOVE_MAX_RATE==0)
@@ -314,6 +343,8 @@ void Widget::run()
                     point.rx() = qrand()%width;
                     point.ry() = qrand()%height;
                     dirty = true;
+                    movedPointMax++;
+                    STAT_POINT_MOVE_MAX++;
                 }
                 else if (qrand()%POINT_MOVE_MED_RATE==0)
                 {
@@ -322,6 +353,8 @@ void Widget::run()
                     point.ry() += qrand()%(POINT_MOVE_MED_RANGE)-POINT_MOVE_MED_RANGE/2;
                     point.ry() = min((unsigned)max(point.y(), 0), height);
                     dirty = true;
+                    movedPointMed++;
+                    STAT_POINT_MOVE_MED++;
                 }
                 else if (qrand()%POINT_MOVE_MIN_RATE==0)
                 {
@@ -330,26 +363,35 @@ void Widget::run()
                     point.ry() += qrand()%(POINT_MOVE_MIN_RANGE)-POINT_MOVE_MIN_RANGE/2;
                     point.ry() = min((unsigned)max(point.y(), 0), height);
                     dirty = true;
+                    movedPointMin++;
+                    STAT_POINT_MOVE_MIN++;
                 }
             }
-        }
-
-        if (dirty)
-        {
-            // Keep points improvements
-            redraw(newGen, polysNew);
-            int newFit = computeFitness(newGen);
-            if (newFit <= oldFit)
+            polysNew[i] = poly;
+            if (dirty)
             {
-                polys = polysNew;
-                generated = newGen;
-                fitness = newFit;
-                updateGuiFitness();
-                ui->imgBest->setPixmap(QPixmap::fromImage(generated));
+                // Keep points improvements
+                redraw(newGen, polysNew);
+                int newFit = computeFitness(newGen);
+                if (newFit <= fitness)
+                {
+                    polys[i] = poly;
+                    generated = newGen;
+                    fitness = newFit;
+                    updateGuiFitness();
+                    ui->imgBest->setPixmap(QPixmap::fromImage(generated));
+                    if (movedPointMax)
+                        STAT_POINT_MOVE_MAX_OK+=movedPointMax;
+                    if (movedPointMed)
+                        STAT_POINT_MOVE_MED_OK+=movedPointMed;
+                    if (movedPointMin)
+                        STAT_POINT_MOVE_MIN_OK+=movedPointMin;
+                }
+                dirty=false;
             }
+            generation++;
+            ui->generationLabel->setNum(generation);
+            app->processEvents();
         }
-        generation++;
-        ui->generationLabel->setNum(generation);
-        app->processEvents();
     }
 }
