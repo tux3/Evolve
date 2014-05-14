@@ -150,7 +150,7 @@ Poly Widget::genPoly()
     }
 #if GEN_WITH_RANDOM_COLOR
     poly.color = QColor::fromRgb(qrand()*qrand()*qrand());
-    poly.color.setAlpha(qrand()%180+20);
+    poly.color.setAlpha(qrand()%(ALPHA_MAX-ALPHA_MIN)+ALPHA_MIN);
 #else
     quint64 avgx=0, avgy=0;
     for (QPoint point : poly.points)
@@ -162,8 +162,7 @@ Poly Widget::genPoly()
     avgy /= N_POLY_POINTS;
 
     poly.color = pic.pixel(avgx,avgy);
-    //poly.color = pic.pixel(avgx,avgy);
-    poly.color.setAlpha(qrand()%180+20);
+    poly.color.setAlpha(qrand()%(ALPHA_MAX-ALPHA_MIN)+ALPHA_MIN);
 #endif
     return poly;
 }
@@ -180,6 +179,21 @@ void Widget::redraw(QImage& target, QVector<Poly> &polyList)
         painter.setBrush(brush);
         painter.drawPolygon(poly.points.data(), poly.points.size());
     }
+}
+
+bool Widget::isInFocus(const Poly& poly)
+{
+    for (QPoint point : poly.points)
+    {
+        if ((unsigned)point.x() < FOCUS_LEFT*width/100
+            || (unsigned)point.x() > FOCUS_RIGHT*width/100
+            || (unsigned)point.y() < FOCUS_TOP*height/100
+            || (unsigned)point.y() > FOCUS_BOTTOM*height/100)
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 void Widget::run()
@@ -236,15 +250,63 @@ void Widget::run()
         ui->generationLabel->setNum(generation);
         app->processEvents();
 
+        // Mutate colors separately
+        newGen = generated;
+        polysNew = polys;
+        dirty = false;
+        for (Poly& poly : polysNew)
+        {
+            if (!isInFocus(poly))
+                continue;
+            if (qrand()%RED_CHANGE_RATE==0)
+            {
+                poly.color.setRed(qrand()%255);
+                dirty=true;
+            }
+            if (qrand()%GREEN_CHANGE_RATE==0)
+            {
+                poly.color.setGreen(qrand()%255);
+                dirty=true;
+            }
+            if (qrand()%BLUE_CHANGE_RATE==0)
+            {
+                poly.color.setBlue(qrand()%255);
+                dirty=true;
+            }
+            if (qrand()%ALPHA_CHANGE_RATE==0)
+            {
+                poly.color.setAlpha(qrand()%(ALPHA_MAX-ALPHA_MIN)+ALPHA_MIN);
+                dirty=true;
+            }
+        }
+        if (dirty)
+        {
+            // Keep color improvements
+            redraw(newGen, polysNew);
+            int newFit = computeFitness(newGen);
+            if (newFit <= oldFit)
+            {
+                polys = polysNew;
+                generated = newGen;
+                fitness = newFit;
+                updateGuiFitness();
+                ui->imgBest->setPixmap(QPixmap::fromImage(generated));
+            }
+        }
+        generation++;
+        ui->generationLabel->setNum(generation);
+        app->processEvents();
+
         // Mutate points separately
         // (it's unlikely that changing both the polys and a random point will help)
         newGen = generated;
         polysNew = polys;
         dirty = false;
 
-
         for (Poly& poly : polysNew)
         {
+            if (!isInFocus(poly))
+                continue;
             for (QPoint& point : poly.points)
             {
                 if (qrand()%POINT_MOVE_MAX_RATE==0)
