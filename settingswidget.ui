@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>445</width>
-    <height>351</height>
+    <width>536</width>
+    <height>353</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -27,7 +27,7 @@
    <item row="2" column="4">
     <widget class="QSpinBox" name="colorVarSpin">
      <property name="minimum">
-      <number>1</number>
+      <number>0</number>
      </property>
      <property name="maximum">
       <number>255</number>
@@ -72,7 +72,7 @@
    <item row="3" column="4">
     <widget class="QSpinBox" name="shapeVarSpin">
      <property name="minimum">
-      <number>1</number>
+      <number>0</number>
      </property>
      <property name="maximum">
       <number>1000</number>

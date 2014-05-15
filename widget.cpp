@@ -174,14 +174,17 @@ Poly Widget::genPoly()
     return poly;
 }
 
-void Widget::redraw(QImage& target, QVector<Poly> &polyList)
+void Widget::redraw(QImage& target, QVector<Poly> &polyList, unsigned startFrom)
 {
     static QBrush brush(Qt::SolidPattern);
-    target.fill(Qt::white);
+    if (startFrom == 0)
+        target.fill(Qt::white);
     QPainter painter(&target);
     painter.setPen(QPen(Qt::NoPen));
-    for (Poly& poly : polyList)
+    unsigned size = polyList.size();
+    for (unsigned i=startFrom; i<size; ++i)
     {
+        Poly& poly = polyList[i];
         brush.setColor(poly.color);
         painter.setBrush(brush);
 #if (useConvexPolys)
@@ -229,23 +232,21 @@ void Widget::run()
         }
 
         // Mutate polygons
-        int oldFit = fitness; // Because tryAddPoly will change it directly
         polysSize=polys.size();
         for (unsigned i=0; i<polysSize && (unsigned)polys.size() < POLYS_MAX; ++i)
             if (qrand()%POLYS_ADD_RATE==0)
                 tryAddPoly(); // Will modify generated directly if it suceeds
 
         QImage newGen;
-        QVector<Poly> polysNew;
-
-        polysSize=polys.size();
-        for (unsigned i=0; i<polysSize && (unsigned)polys.size() > POLYS_MIN; ++i)
+        QVector<Poly> polysNew=polys;
+        QImage predraw(width, height, QImage::Format_ARGB32);
+        predraw.fill(Qt::white);
+        for (unsigned i=0; i<(unsigned)polysNew.size() && (unsigned)polysNew.size() > POLYS_MIN; ++i)
         {
             bool dirty=false;
             bool removedPoly=false;
-            newGen = generated;
             polysNew = polys;
-            if (qrand()%POLYS_REMOVE_RATE==0 && polysSize > POLYS_MIN)
+            if (qrand()%POLYS_REMOVE_RATE==0 && (unsigned)polysNew.size() > POLYS_MIN)
             {
                 removedPoly=true;
                 STAT_POLY_REMOVE++;
@@ -256,9 +257,11 @@ void Widget::run()
             if (dirty)
             {
                 // Keep polys improvements
-                redraw(newGen, polysNew);
+                newGen = predraw;
+                if (i<(unsigned)polysNew.size())
+                    redraw(newGen, polysNew, i);
                 int newFit = computeFitness(newGen);
-                if (newFit <= oldFit)
+                if (newFit <= fitness)
                 {
                     polys = polysNew;
                     generated = newGen;
@@ -270,11 +273,14 @@ void Widget::run()
                         STAT_POLY_REMOVE_OK++;
                 }
             }
+            if (i<(unsigned)polysNew.size())
+                Poly::drawPoly(predraw, polysNew[i]);
             generation++;
             ui->generationLabel->setNum(generation);
             app->processEvents();
         }
 
+        predraw.fill(Qt::white);
         for (unsigned i=0; i<polysSize; ++i)
         {
             newGen = generated;
@@ -312,9 +318,9 @@ void Widget::run()
         }
 
         // Mutate colors separately
-        newGen = generated;
         polysNew = polys;
         bool dirty = false;
+        predraw.fill(Qt::white);
         unsigned polysNewSize = polysNew.size();
         for (unsigned i=0; i<polysNewSize; ++i)
         {
@@ -341,11 +347,11 @@ void Widget::run()
                 poly.color.setAlpha(qrand()%(ALPHA_MAX-ALPHA_MIN)+ALPHA_MIN);
                 dirty=true;
             }
-            polysNew[i] = poly;
             if (dirty)
             {
                 // Keep color improvements
-                redraw(newGen, polysNew);
+                newGen=predraw;
+                redraw(newGen, polysNew, i);
                 int newFit = computeFitness(newGen);
                 if (newFit <= fitness)
                 {
@@ -359,6 +365,7 @@ void Widget::run()
                     polysNew[i] = polys[i];
                 dirty = false;
             }
+            Poly::drawPoly(predraw, polysNew[i]);
             generation++;
             ui->generationLabel->setNum(generation);
             app->processEvents();
@@ -371,6 +378,7 @@ void Widget::run()
         dirty = false;
 
         polysNewSize = polysNew.size();
+        predraw.fill(Qt::white);
         for (unsigned i=0; i<polysNewSize; ++i)
         {
             Poly& poly = polysNew[i];
@@ -412,7 +420,8 @@ void Widget::run()
             if (dirty)
             {
                 // Keep points improvements
-                redraw(newGen, polysNew);
+                newGen=predraw;
+                redraw(newGen, polysNew, i);
                 int newFit = computeFitness(newGen);
                 if (newFit <= fitness)
                 {
@@ -433,6 +442,7 @@ void Widget::run()
             generation++;
             ui->generationLabel->setNum(generation);
             app->processEvents();
+            Poly::drawPoly(predraw, polysNew[i]);
         }
     }
 }

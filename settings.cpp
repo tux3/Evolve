@@ -1,7 +1,7 @@
 #include "settings.h"
 
 unsigned N_POLY_POINTS = 4;
-unsigned N_COLOR_VAR = 10;
+unsigned N_COLOR_VAR = 15;
 unsigned N_POS_VAR = 0;
 unsigned GUI_REFRESH_RATE = 1;
 unsigned AUTOFOCUS_RES = 2;
@@ -29,5 +29,5 @@ unsigned ALPHA_CHANGE_RATE=200;
 unsigned POINT_MOVE_MED_RANGE=40;
 unsigned POINT_MOVE_MIN_RANGE=6;
 unsigned ALPHA_MIN=30;
-unsigned ALPHA_MAX=100;
+unsigned ALPHA_MAX=150;
 

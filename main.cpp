@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
  *
  * An option for the size of the pic would be good. It's unconvinient to save a svg with 50k polygons and open it in illustrator (takes forever to load).
  *
- * A mutation that switches poly between convex and non-convex drawing mode
+ * Optimization : processEvents is 17% of run(), apply the ratelimit to the processEvents in run()
  *
  * Stuff from EvoLisa :
  * Can add new polygons at a random zindex instead of always on top

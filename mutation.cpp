@@ -1,6 +1,7 @@
 #include "widget.h"
 #include "ui_widget.h"
 #include "stats.h"
+#include "settings.h"
 
 void Widget::tryAddPoly()
 {
@@ -20,7 +21,8 @@ void Widget::tryAddPoly()
 
         // Optimize
         optimizeColors(polyPos, predrawn);
-        optimizeShape(polyPos, predrawn);
+        if (N_POS_VAR != 0)
+            optimizeShape(polyPos, predrawn);
         fitness = computeFitness(generated);
 
         // Update GUI

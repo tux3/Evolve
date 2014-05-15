@@ -9,7 +9,7 @@
 #include <QPainter>
 #include "stdint.h"
 
-#define useConvexPolys 1
+#define useConvexPolys true
 
 struct Poly
 {

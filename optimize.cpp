@@ -102,9 +102,9 @@ void Widget::optimizeColors(int polyIndex, QImage& predrawn)
             else if (targetColor == 7)
                 color.setGreen(max(color.green()-(int)N_COLOR_VAR,0)); // Less green
             else if (targetColor == 8)
-                color.setAlpha(max(color.alpha()-(int)N_COLOR_VAR,0)); // Less alpha
+                color.setAlpha(max(color.alpha()-(int)N_COLOR_VAR,(int)ALPHA_MIN)); // Less alpha
             else if (targetColor == 9 && OPT_INCREASE_ALPHA)
-                color.setAlpha(min(color.alpha()+(int)N_COLOR_VAR,255)); // More alpha
+                color.setAlpha(min(color.alpha()+(int)N_COLOR_VAR,(int)ALPHA_MAX)); // More alpha
             poly.color = color;
         } while (validate());
     }
