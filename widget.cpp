@@ -10,6 +10,7 @@
 #include <QPainter>
 #include <QRgb>
 #include <QtConcurrent/QtConcurrent>
+#include <QElapsedTimer>
 #include <ctime>
 
 unsigned Widget::height;
@@ -217,7 +218,15 @@ bool Widget::isInFocus(const Poly& poly)
 
 void Widget::run()
 {
-    qsrand(time(NULL)); // Just in case the user was having bad random, here's a way to reset
+    /*
+    QElapsedTimer bench;
+    bench.start();
+    computeFitness(generated);
+    qDebug() << bench.nsecsElapsed();
+    return;
+    */
+
+    qsrand(time(0)); // Just in case the user was having bad random, here's a way to reset
 
     // Main loop
     while (running)
