@@ -35,4 +35,4 @@ FORMS    += widget.ui \
 CONFIG += c++11
 
 QMAKE_CXXFLAGS_RELEASE += -O3 -flto -march=native # Crashes on some computers
-QMAKE_CXXFLAGS_DEBUG += -O0
+QMAKE_CXXFLAGS_DEBUG += -Og

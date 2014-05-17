@@ -6,7 +6,7 @@ void Widget::tryAddPoly()
     Poly poly = genPoly();
     QImage newGen = generated;
     Poly::drawPoly(newGen, poly);
-    int newFit = computeFitness(newGen);
+    quint64 newFit = computeFitness(newGen);
     if (newFit < fitness)
     {
         // Update data

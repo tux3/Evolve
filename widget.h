@@ -23,7 +23,7 @@ class Widget : public QWidget
 public:
     explicit Widget();
     ~Widget();
-    static int computeFitness(const QImage& target, const QRect box=QRect());
+    static quint64 computeFitness(const QImage& target, const QRect box=QRect());
     Poly genPoly(); // Creates a new random polygon
     QImage predraw(int polyIndex);
     static void redraw(QImage& target, QVector<Poly>& polyList = polys);
@@ -66,7 +66,8 @@ private:
     bool running;
     static QVector<Poly> polys;
     static unsigned height, width;
-    int fitness, generation;
+    quint64 fitness;
+    int generation;
 };
 
 #endif // WIDGET_H

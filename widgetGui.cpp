@@ -33,7 +33,7 @@ void Widget::openImageClicked()
     running = false;
 
     pic.loadFromData(file.readAll());
-    pic = pic.convertToFormat(QImage::Format_ARGB32);
+    pic = pic.convertToFormat(QImage::Format_RGB32);
     ui->imgOriginal->setPixmap(QPixmap::fromImage(pic));
 
     // Update our data
@@ -155,7 +155,7 @@ void Widget::settingsClicked()
 
 void Widget::updateGuiFitness()
 {
-    int worstFitness = width*height*3*255;
+    quint64 worstFitness = width*height*3*255;
     float percentFitness = 100.0-((double)fitness/(double)worstFitness*100.0);
     ui->fitnessLabel->setNum(percentFitness);
     ui->fitnessLabel->setText(ui->fitnessLabel->text()+'%');

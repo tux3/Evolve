@@ -64,7 +64,7 @@ Widget::~Widget()
     exit(0);
 }
 
-int Widget::computeFitness(const QImage& target, const QRect box)
+quint64 Widget::computeFitness(const QImage& target, const QRect box)
 {
     unsigned minx, maxx, miny, maxy;
     if (box.isNull())
@@ -92,7 +92,7 @@ int Widget::computeFitness(const QImage& target, const QRect box)
 
     auto computeSlice = [&](const unsigned start, const unsigned end)
     {
-        unsigned partFitness=0;
+        quint64 partFitness=0;
         for (unsigned i=start-miny; i<end-miny; i++)
         {
             // Sum of the differences of each pixel's color
@@ -107,11 +107,11 @@ int Widget::computeFitness(const QImage& target, const QRect box)
         }
         return partFitness;
     };
-    QFuture<unsigned> slices[N_CORES];
+    QFuture<quint64> slices[N_CORES];
     for (int i=0; i < N_CORES; i++){
         slices[i] = QtConcurrent::run(computeSlice, miny+(maxy/N_CORES) *i, (maxy/N_CORES) * (i+1));
     }
-	unsigned fitness=0;
+    quint64 fitness=0;
     for (int i=0; i < N_CORES; i++)
         fitness+=slices[i].result();
     return fitness;

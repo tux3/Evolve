@@ -46,7 +46,7 @@ void Widget::optimizeColors(int polyIndex, QImage& predrawn)
             painter.setBrush(brush);
             painter.drawPolygon(polys[i].points.data(), polys[i].points.size());
         }
-        int newFit = computeFitness(newGen);
+        quint64 newFit = computeFitness(newGen);
         generation++;
         ui->generationLabel->setNum(generation);
         if (newFit < fitness)
@@ -131,7 +131,7 @@ void Widget::optimizeShape(int polyIndex, QImage& predrawn)
             painter.setBrush(brush);
             painter.drawPolygon(polys[i].points.data(), polys[i].points.size());
         }
-        int newFit = computeFitness(newGen);
+        quint64 newFit = computeFitness(newGen);
         generation++;
         ui->generationLabel->setNum(generation);
         if (newFit < fitness)
