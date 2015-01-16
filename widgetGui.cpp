@@ -353,7 +353,6 @@ bool Widget::eventFilter(QObject *object, QEvent *event)
     {
         // Draw the focus rect
         QPixmap newpic = QPixmap::fromImage(pic);
-        //newpic = newpic.scaled(ui->imgOriginal->size());
         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
         QPoint endCoords = mouseEvent->pos();
         endCoords.setX(max(min(endCoords.x(), ui->imgOriginal->width()),0));
@@ -372,6 +371,7 @@ bool Widget::eventFilter(QObject *object, QEvent *event)
         paint.setPen(pen);
         paint.drawRect(QRect(scaledStart, scaledEnd));
         paint.end();
+        ui->imgOriginal->clear();
         ui->imgOriginal->setPixmap(newpic);
 
         // Set the focus coords
