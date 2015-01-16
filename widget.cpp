@@ -199,6 +199,7 @@ void Widget::run()
         if (polysSize < POLYS_MIN && polysSize < POLYS_MAX)
         {
             tryAddPoly();
+            app->processEvents();
             continue;
         }
 
