@@ -11,6 +11,12 @@
 #include <QtConcurrent/QtConcurrent>
 #include <ctime>
 
+//#define TIME_FITNESS
+
+#ifdef TIME_FITNESS
+#include <QElapsedTimer>
+#endif
+
 unsigned Widget::height;
 unsigned Widget::width;
 QImage Widget::pic;
@@ -71,7 +77,7 @@ Widget::~Widget()
     exit(0);
 }
 
-void Widget::setAutofocus(bool enabled, int delay)
+void Widget::setAutofocus(bool enabled)
 {
     if (enabled)
     {
@@ -138,10 +144,10 @@ QRect Widget::computeAutofocusFitness(const QImage& target)
 
 quint64 Widget::computeFitness(const QImage& target)
 {
-    unsigned minx, maxx, miny, maxy;
-    minx = miny = 0;
-    maxx = width;
-    maxy = height;
+#ifdef TIME_FITNESS
+    QElapsedTimer timer;
+    timer.start();
+#endif
 
     const uchar* origData = pic.bits(), *targetData = target.bits();
     const unsigned BPL = pic.bytesPerLine();
@@ -151,11 +157,11 @@ quint64 Widget::computeFitness(const QImage& target)
         quint64 partFitness=0;
         __m64 mmFitness = _mm_setzero_si64();
         __m64 tmp;
-        for (unsigned i=start-miny; i<end-miny; i++)
+        for (unsigned i=start; i<end; i++)
         {
             const unsigned curLine = BPL*i;
             // Sum of the differences of each pixel's color
-            for (unsigned j=minx; j<maxx*8; j+=8)
+            for (unsigned j=0; j+8<BPL; j+=8)
             {
                 __m64 mmOrig = _m_from_int64(*(quint64*)(origData+curLine+j));
                 __m64 mmTarget = _m_from_int64(*(quint64*)(targetData+curLine+j));
@@ -168,11 +174,18 @@ quint64 Widget::computeFitness(const QImage& target)
     };
     QFuture<quint64> slices[N_CORES];
     for (int i=0; i < N_CORES; i++){
-        slices[i] = QtConcurrent::run(computeSlice, miny+(maxy/N_CORES) *i, (maxy/N_CORES) * (i+1));
+        slices[i] = QtConcurrent::run(computeSlice, height/N_CORES*i, height/N_CORES*(i+1));
     }
     quint64 fitness=0;
     for (int i=0; i < N_CORES; i++)
         fitness+=slices[i].result();
+
+#ifdef TIME_FITNESS
+    static quint64 elapsed=0, runs=0;
+    elapsed += timer.nsecsElapsed();
+    runs++;
+    qDebug() << "Fitness:" << elapsed/runs/1000;
+#endif
 
     return fitness;
 }

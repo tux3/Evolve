@@ -70,6 +70,6 @@ void SettingsWidget::okClicked()
     AUTOFOCUS_ENABLED = ui->autofocusEnable->isChecked();
     AUTOFOCUS_SUBDIVS = ui->autofocusSubdivs->value();
     AUTOFOCUS_DELAY = ui->autofocusDelay->value();
-    Widget::setAutofocus(AUTOFOCUS_ENABLED, AUTOFOCUS_DELAY);
+    Widget::setAutofocus(AUTOFOCUS_ENABLED);
     close();
 }
