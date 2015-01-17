@@ -10,6 +10,7 @@
 #include <QRgb>
 #include <QtConcurrent/QtConcurrent>
 #include <ctime>
+#include <QElapsedTimer>
 
 unsigned Widget::height;
 unsigned Widget::width;
@@ -66,25 +67,30 @@ Widget::~Widget()
 
 quint64 Widget::computeFitness(const QImage& target)
 {
+    QElapsedTimer timer;
+    timer.start();
+
     unsigned minx, maxx, miny, maxy;
     minx = miny = 0;
     maxx = width;
     maxy = height;
 
     const uchar* origData = pic.bits(), *targetData = target.bits();
-    const unsigned origPL = pic.bytesPerLine()/4, targetPL = target.bytesPerLine()/4;
+    const unsigned BPL = pic.bytesPerLine();
 
     auto computeSlice = [&](const unsigned start, const unsigned end)
     {
         quint64 partFitness=0;
-        for (unsigned i=start-miny; i<end-miny; i++)
+        const unsigned iend=(end-miny)*BPL;
+        for (unsigned i=(start-miny)*BPL; i<iend; i+=BPL)
         {
             // Sum of the differences of each pixel's color
-            for (unsigned j=minx; j<maxx; j++)
+            const unsigned jend = maxx*4;
+            for (unsigned j=minx*4; j<jend; j+=4)
             {
-                unsigned ocolor = origData[origPL*i+j];
+                unsigned ocolor = origData[i+j];
                 int oR=(ocolor>>16), oG=(ocolor>>8)&0xFF, oB=(ocolor&0xFF);
-                unsigned tcolor = targetData[targetPL*i+j];
+                unsigned tcolor = targetData[i+j];
                 int tR=(tcolor>>16), tG=(tcolor>>8)&0xFF, tB=(tcolor&0xFF);
                 partFitness += abs(tR-oR)+abs(tG-oG)+abs(tB-oB);
             }
@@ -98,6 +104,12 @@ quint64 Widget::computeFitness(const QImage& target)
     quint64 fitness=0;
     for (int i=0; i < N_CORES; i++)
         fitness+=slices[i].result();
+
+    static quint64 elapsed=0, runs=0;
+    elapsed += timer.nsecsElapsed();
+    runs++;
+
+    qDebug() << "Fitness:" << elapsed/runs/1000;
 
     return fitness;
 }
