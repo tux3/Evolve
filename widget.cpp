@@ -81,20 +81,21 @@ quint64 Widget::computeFitness(const QImage& target)
     auto computeSlice = [&](const unsigned start, const unsigned end)
     {
         quint64 partFitness=0;
-        const unsigned iend=(end-miny)*BPL;
-        for (unsigned i=(start-miny)*BPL; i<iend; i+=BPL)
+        __m64 mmFitness = _mm_setzero_si64();
+        __m64 tmp;
+        for (unsigned i=start-miny; i<end-miny; i++)
         {
+            const unsigned curLine = BPL*i;
             // Sum of the differences of each pixel's color
-            const unsigned jend = maxx*4;
-            for (unsigned j=minx*4; j<jend; j+=4)
+            for (unsigned j=minx; j<maxx*8; j+=8)
             {
-                unsigned ocolor = origData[i+j];
-                int oR=(ocolor>>16), oG=(ocolor>>8)&0xFF, oB=(ocolor&0xFF);
-                unsigned tcolor = targetData[i+j];
-                int tR=(tcolor>>16), tG=(tcolor>>8)&0xFF, tB=(tcolor&0xFF);
-                partFitness += abs(tR-oR)+abs(tG-oG)+abs(tB-oB);
+                __m64* mmOrig = (__m64*)(origData+curLine+j);
+                __m64* mmTarget = (__m64*)(targetData+curLine+j);
+                tmp = _m_psadbw(*mmOrig, *mmTarget);
+                mmFitness = _mm_add_si64(mmFitness, tmp);
             }
         }
+        *(__m64*)(&partFitness) += mmFitness;
         return partFitness;
     };
     QFuture<quint64> slices[N_CORES];
