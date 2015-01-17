@@ -28,10 +28,10 @@ public:
     Poly genPoly(); // Creates a new random polygon
     QImage predraw(int polyIndex);
     static void redraw(QImage& target, QVector<Poly>& polyList = polys);
-    void optimizeColors(int polyIndex); // Will update generated directly
-    void optimizeColors(int polyIndex, QImage& predrawn); // Will update generated directly
-    void optimizeShape(int polyIndex); // Will update generated directly
-    void optimizeShape(int polyIndex, QImage& predrawn); // Will update generated directly
+    void optimizeColors(int polyIndex, QVector<Poly>& newPolys=polys); // Will update generated directly
+    void optimizeColors(int polyIndex, QVector<Poly> &newPolys, QImage& predrawn); // Will update generated directly
+    void optimizeShape(int polyIndex, QVector<Poly> &newPolys=polys); // Will update generated directly
+    void optimizeShape(int polyIndex, QVector<Poly>& newPolys, QImage& predrawn); // Will update generated directly
     void updateGuiFitness();
     void run(); // Run the vectorizer's main loop
     void setRunningGui();
@@ -39,8 +39,9 @@ public:
     bool virtual eventFilter(QObject *object, QEvent *event);
     // Mutations
     void tryAddPoly(); // Will gen one poly and add it to generated only if it improves fitness
-    static void removePoly(QVector<Poly>&, QImage& target); // Will remove a poly, without testing if it improves fitness
-    static void reorderPoly(QVector<Poly>&, QImage& target); // Will change the zorder of a poly, without testing if it improves fitness
+    void removePoly(QVector<Poly>&, QImage& target); // Will remove a poly, without testing if it improves fitness
+    void reorderPoly(QVector<Poly>&, QImage& target); // Will change the zorder of a poly, without testing if it improves fitness
+    void shapeOptPoly(QVector<Poly>& newPolys);
     static void setAutofocus(bool enabled);
 
 protected:

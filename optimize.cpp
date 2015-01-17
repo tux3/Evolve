@@ -7,13 +7,13 @@
 
 using namespace std;
 
-void Widget::optimizeColors(int polyIndex)
+void Widget::optimizeColors(int polyIndex, QVector<Poly>& newPolys)
 {
     QImage predrawn = predraw(polyIndex);
-    optimizeColors(polyIndex, predrawn);
+    optimizeColors(polyIndex, newPolys, predrawn);
 }
 
-void Widget::optimizeColors(int polyIndex, QImage& predrawn)
+void Widget::optimizeColors(int polyIndex, QVector<Poly>& newPolys, QImage& predrawn)
 {
     /*
     // Find the poly's bounding box
@@ -30,8 +30,8 @@ void Widget::optimizeColors(int polyIndex, QImage& predrawn)
     QRect box(minx, miny, maxx-minx, maxy-miny);
     */
 
-    int polysSize = polys.size();
-    Poly& poly = polys[polyIndex];
+    int polysSize = newPolys.size();
+    Poly& poly = newPolys[polyIndex];
     static QBrush brush(Qt::SolidPattern);
     int processEventsRatelimit = 0;
 
@@ -43,9 +43,9 @@ void Widget::optimizeColors(int polyIndex, QImage& predrawn)
         painter.setPen(QPen(Qt::NoPen));
         for (int i=polyIndex; i<polysSize; ++i)
         {
-            brush.setColor(polys[i].color);
+            brush.setColor(newPolys[i].color);
             painter.setBrush(brush);
-            painter.drawPolygon(polys[i].points.data(), polys[i].points.size());
+            painter.drawPolygon(newPolys[i].points.data(), newPolys[i].points.size());
         }
         quint64 newFit = computeFitness(newGen);
         generation++;
@@ -115,16 +115,16 @@ void Widget::optimizeColors(int polyIndex, QImage& predrawn)
     app->processEvents();
 }
 
-void Widget::optimizeShape(int polyIndex)
+void Widget::optimizeShape(int polyIndex, QVector<Poly>& newPolys)
 {
     QImage predrawn = predraw(polyIndex);
-    optimizeShape(polyIndex, predrawn);
+    optimizeShape(polyIndex, newPolys, predrawn);
 }
 
-void Widget::optimizeShape(int polyIndex, QImage& predrawn)
+void Widget::optimizeShape(int polyIndex, QVector<Poly>& newPolys, QImage& predrawn)
 {
-    int polysSize = polys.size();
-    Poly& poly = polys[polyIndex];
+    int polysSize = newPolys.size();
+    Poly& poly = newPolys[polyIndex];
     static QBrush brush(Qt::SolidPattern);
 
     // Check if the pic is better, commit and return if it is
@@ -135,9 +135,9 @@ void Widget::optimizeShape(int polyIndex, QImage& predrawn)
         painter.setPen(QPen(Qt::NoPen));
         for (int i=polyIndex; i<polysSize; ++i)
         {
-            brush.setColor(polys[i].color);
+            brush.setColor(newPolys[i].color);
             painter.setBrush(brush);
-            painter.drawPolygon(polys[i].points.data(), polys[i].points.size());
+            painter.drawPolygon(newPolys[i].points.data(), newPolys[i].points.size());
         }
         quint64 newFit = computeFitness(newGen);
         generation++;

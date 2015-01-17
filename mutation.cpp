@@ -17,8 +17,8 @@ void Widget::tryAddPoly()
         generated = newGen;
 
         // Optimize
-        optimizeColors(polyPos, predrawn);
-        optimizeShape(polyPos, predrawn);
+        optimizeColors(polyPos, polys, predrawn);
+        optimizeShape(polyPos, polys, predrawn);
         fitness = computeFitness(generated);
 
         // Update GUI
@@ -35,6 +35,12 @@ void Widget::removePoly(QVector<Poly>& newPolys, QImage &target)
     redraw(target, newPolys);
 }
 
+void Widget::shapeOptPoly(QVector<Poly>& newPolys)
+{
+    int index = qrand()%newPolys.size();
+    optimizeShape(index);
+}
+
 void Widget::reorderPoly(QVector<Poly>& newPolys, QImage &target)
 {
     int source = qrand()%newPolys.size();
@@ -42,4 +48,6 @@ void Widget::reorderPoly(QVector<Poly>& newPolys, QImage &target)
     Poly poly = newPolys.takeAt(source);
     newPolys.insert(dest, poly);
     redraw(target, newPolys);
+    optimizeShape(dest);
+    optimizeColors(dest);
 }
