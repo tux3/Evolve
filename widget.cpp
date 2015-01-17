@@ -89,9 +89,9 @@ quint64 Widget::computeFitness(const QImage& target)
             // Sum of the differences of each pixel's color
             for (unsigned j=minx; j<maxx*8; j+=8)
             {
-                __m64* mmOrig = (__m64*)(origData+curLine+j);
-                __m64* mmTarget = (__m64*)(targetData+curLine+j);
-                tmp = _m_psadbw(*mmOrig, *mmTarget);
+                __m64 mmOrig = _m_from_int64(*(quint64*)(origData+curLine+j));
+                __m64 mmTarget = _m_from_int64(*(quint64*)(targetData+curLine+j));
+                tmp = _m_psadbw(mmOrig, mmTarget);
                 mmFitness = _mm_add_si64(mmFitness, tmp);
             }
         }
