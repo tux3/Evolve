@@ -34,3 +34,11 @@ QDataStream& operator>> (QDataStream& stream, Poly& poly)
     stream >> poly.points;
     return stream;
 }
+
+bool Poly::hasPointIn(QRect rect)
+{
+    for (QPoint& point:points)
+        if (rect.contains(point))
+            return true;
+    return false;
+}

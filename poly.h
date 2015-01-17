@@ -17,6 +17,7 @@ public:
     bool operator==(const Poly& other);
     static void drawPoly(QImage& target, Poly& poly);
     static void drawPoly(QImage& target, Poly& poly, QPainter& painter);
+    bool hasPointIn(QRect rect);
 
 public:
     QVector<QPoint> points;

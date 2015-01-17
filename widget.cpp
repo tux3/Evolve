@@ -293,8 +293,8 @@ void Widget::run()
         if (qrand()%100 < POLYS_REORDER_RATE)
             reorderPoly(polysNew, newGen);
 
-        if (qrand()%100 < SHAPE_OPT_RATE)
-            shapeOptPoly(polysNew);
+        if (qrand()%100 < POINT_MOVE_RATE)
+            movePoint(polysNew, newGen);
 
         // Keep improvements
         int newFit = computeFitness(newGen);
