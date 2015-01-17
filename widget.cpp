@@ -189,6 +189,8 @@ void Widget::run()
         if (polysSize < POLYS_MIN && polysSize < POLYS_MAX)
         {
             tryAddPoly();
+            generation++;
+            ui->generationLabel->setNum(generation);
             app->processEvents();
             continue;
         }
