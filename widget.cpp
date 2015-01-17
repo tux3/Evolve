@@ -170,16 +170,6 @@ void Widget::redraw(QImage& target, QVector<Poly> &polyList)
     }
 }
 
-void Widget::redraw2(QImage& target, QVector<Poly> &polyList)
-{
-    static QBrush brush(Qt::SolidPattern);
-    target.fill(Qt::white);
-    for (Poly& poly : polyList)
-    {
-        Poly::drawPoly(target, poly);
-    }
-}
-
 void Widget::run()
 {
     // Main loop

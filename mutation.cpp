@@ -21,8 +21,6 @@ void Widget::tryAddPoly()
         optimizeShape(polyPos, predrawn);
         fitness = computeFitness(generated);
 
-        qDebug()<<"New poly:"<<polys[polyPos].points;
-
         // Update GUI
         ui->imgBest->setPixmap(QPixmap::fromImage(generated));
         ui->polysLabel->setNum(polyPos+1);

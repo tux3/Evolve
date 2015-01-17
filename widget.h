@@ -27,7 +27,6 @@ public:
     Poly genPoly(); // Creates a new random polygon
     QImage predraw(int polyIndex);
     static void redraw(QImage& target, QVector<Poly>& polyList = polys);
-    static void redraw2(QImage& target, QVector<Poly>& polyList = polys);
     void optimizeColors(int polyIndex); // Will update generated directly
     void optimizeColors(int polyIndex, QImage& predrawn); // Will update generated directly
     void optimizeShape(int polyIndex); // Will update generated directly

@@ -102,7 +102,7 @@ void Widget::importDnaClicked()
 
 void Widget::redrawClicked()
 {
-    redraw2(generated);
+    redraw(generated);
     ui->imgBest->setPixmap(QPixmap::fromImage(generated));
 }
 
