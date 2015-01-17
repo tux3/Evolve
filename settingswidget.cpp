@@ -1,6 +1,7 @@
 #include "settingswidget.h"
 #include "ui_settingswidget.h"
 #include "settings.h"
+#include "widget.h"
 #include <QMessageBox>
 
 bool SettingsWidget::isDefaultConfig = true;
@@ -26,6 +27,9 @@ SettingsWidget::SettingsWidget(QWidget *parent) :
     ui->coreSpin->setValue(N_CORES);
     ui->minPolySpin->setValue(POLYS_MIN);
     ui->maxPolySpin->setValue(POLYS_MAX);
+    ui->autofocusEnable->setChecked(AUTOFOCUS_ENABLED);
+    ui->autofocusSubdivs->setValue(AUTOFOCUS_SUBDIVS);
+    ui->autofocusDelay->setValue(AUTOFOCUS_DELAY);
 }
 
 SettingsWidget::~SettingsWidget()
@@ -63,5 +67,9 @@ void SettingsWidget::okClicked()
     N_CORES = ui->coreSpin->value();
     POLYS_MIN = ui->minPolySpin->value();
     POLYS_MAX = ui->maxPolySpin->value();
+    AUTOFOCUS_ENABLED = ui->autofocusEnable->isChecked();
+    AUTOFOCUS_SUBDIVS = ui->autofocusSubdivs->value();
+    AUTOFOCUS_DELAY = ui->autofocusDelay->value();
+    Widget::setAutofocus(AUTOFOCUS_ENABLED, AUTOFOCUS_DELAY);
     close();
 }

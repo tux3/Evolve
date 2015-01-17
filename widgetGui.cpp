@@ -23,6 +23,38 @@ void Widget::closeEvent(QCloseEvent *event)
     exit(0);
 }
 
+void Widget::autofocusClicked()
+{
+    QRect focus = computeAutofocusFitness(generated);
+
+    // Draw the focus rect
+    QPixmap newpic = QPixmap::fromImage(pic);
+    QPainter paint;
+    paint.begin(&newpic);
+    QPen pen(Qt::SolidLine);
+    pen.setWidth(3*max((float)width/ui->imgBest->width(), (float)height/ui->imgBest->height()));
+    pen.setColor(QColor(200,0,0,150));
+    paint.setPen(pen);
+    paint.drawRect(focus);
+    paint.end();
+    ui->imgOriginal->clear();
+    ui->imgOriginal->setPixmap(newpic);
+
+    // Set the focus coords
+    FOCUS_LEFT = min(focus.x(),focus.right())*100/newpic.width();
+    FOCUS_RIGHT = max(focus.x(),focus.right())*100/newpic.width();
+    FOCUS_TOP = min(focus.y(),focus.bottom())*100/newpic.height();
+    FOCUS_BOTTOM = max(focus.y(),focus.bottom())*100/newpic.height();
+    if (FOCUS_LEFT == 100)
+        FOCUS_LEFT = 99;
+    if (FOCUS_TOP == 100)
+        FOCUS_TOP = 99;
+    if (FOCUS_RIGHT <= FOCUS_LEFT)
+        FOCUS_RIGHT = FOCUS_LEFT+1;
+    if (FOCUS_BOTTOM <= FOCUS_TOP)
+        FOCUS_BOTTOM = FOCUS_TOP+1;
+}
+
 void Widget::openImageClicked()
 {
     QString filename = QFileDialog::getOpenFileName(this,"Open Image","", "Images (*.png *.gif *.jpg *.jpeg *.bmp)");

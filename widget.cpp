@@ -15,6 +15,7 @@ unsigned Widget::height;
 unsigned Widget::width;
 QImage Widget::pic;
 QVector<Poly> Widget::polys;
+QTimer Widget::autofocusTimer;
 
 using namespace std;
 
@@ -32,6 +33,7 @@ Widget::Widget() :
     fileMenu->addAction("&Export as SVG", this, SLOT(saveSVGClicked()));
     fileMenu->addSeparator();
     startStopAction = fileMenu->addAction("S&tart");
+    fileMenu->addAction("&AutoFocus", this, SLOT(autofocusClicked()));
     fileMenu->addAction("&Quit", this, SLOT(close()));
     QMenu* dnaMenu = menuBar->addMenu(tr("&DNA"));
     dnaMenu->addAction("&Import DNA", this, SLOT(importDnaClicked()));
@@ -47,11 +49,15 @@ Widget::Widget() :
     ui->gridLayout->addWidget(menuBar,0,0,1,4);
     menuBar->setFixedHeight(22);
 
+    autofocusTimer.setSingleShot(false);
+    autofocusTimer.setInterval(AUTOFOCUS_DELAY);
+
     generation = 0;
     running = false;
 
     connect(ui->btnOpen, SIGNAL(clicked()), this, SLOT(openImageClicked()));
     connect(ui->btnStart, SIGNAL(clicked()), this, SLOT(startClicked()));
+    connect(&autofocusTimer, SIGNAL(timeout()), this, SLOT(autofocusClicked()));
 
     ui->imgOriginal->installEventFilter(this);
 
@@ -64,6 +70,71 @@ Widget::~Widget()
     running = false;
     exit(0);
 }
+
+void Widget::setAutofocus(bool enabled, int delay)
+{
+    if (enabled)
+    {
+        autofocusTimer.start(AUTOFOCUS_DELAY);
+    }
+    else
+    {
+        autofocusTimer.stop();
+        autofocusTimer.setInterval(AUTOFOCUS_DELAY);
+    }
+}
+
+QRect Widget::computeAutofocusFitness(const QImage& target)
+{
+    static QVector<QRgb*> originalLines;
+    originalLines.resize(height);
+    for (unsigned i=0; i<height; i++)
+        originalLines[i] = ((QRgb*)pic.scanLine(i));
+    static QVector<QRgb*> targetLines;
+    targetLines.resize(height);
+    for (unsigned i=0; i<height; i++)
+        targetLines[i] = ((QRgb*)target.scanLine(i));
+
+    auto computeSlice = [&](const unsigned minx, const unsigned maxx, const unsigned miny, const unsigned maxy)
+    {
+        unsigned partFitness=0;
+        for (unsigned i=miny; i<maxy; i++)
+        {
+            // Sum of the differences of each pixel's color
+            for (unsigned j=minx; j<maxx; j++)
+            {
+                unsigned ocolor = originalLines.at(i)[j];
+                int oR=(ocolor>>16), oG=(ocolor>>8)&0xFF, oB=(ocolor&0xFF);
+                unsigned tcolor = targetLines.at(i)[j];
+                int tR=(tcolor>>16), tG=(tcolor>>8)&0xFF, tB=(tcolor&0xFF);
+                partFitness += abs(tR-oR)+abs(tG-oG)+abs(tB-oB);
+            }
+        }
+        return partFitness;
+    };
+
+    QFuture<unsigned> slices[AUTOFOCUS_SUBDIVS*AUTOFOCUS_SUBDIVS];
+    unsigned const sliceW = width/AUTOFOCUS_SUBDIVS, sliceH = height/AUTOFOCUS_SUBDIVS;
+    for (int i=0; i < AUTOFOCUS_SUBDIVS*AUTOFOCUS_SUBDIVS; i++){
+        slices[i] = QtConcurrent::run(computeSlice,
+                        (i%AUTOFOCUS_SUBDIVS)*sliceW, (i%AUTOFOCUS_SUBDIVS+1)*sliceW,
+                        (i/AUTOFOCUS_SUBDIVS)*sliceH, (i/AUTOFOCUS_SUBDIVS+1)*sliceH);
+    }
+    quint64 worstFitness = sliceW*sliceH*3*255;
+    int best=0;
+    float min=100;
+    for (int i=0; i < AUTOFOCUS_SUBDIVS*AUTOFOCUS_SUBDIVS; i++)
+    {
+        float percentFitness = 100.0-((double)slices[i].result()/(double)worstFitness*100.0);
+        if (percentFitness<min)
+        {
+            min=percentFitness;
+            best=i;
+        }
+    }
+    return QRect(best%AUTOFOCUS_SUBDIVS*sliceW,best/AUTOFOCUS_SUBDIVS*sliceH,sliceW,sliceH);
+}
+
 
 quint64 Widget::computeFitness(const QImage& target)
 {

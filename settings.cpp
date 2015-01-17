@@ -1,5 +1,8 @@
 #include "settings.h"
 
+bool AUTOFOCUS_ENABLED = false;
+int AUTOFOCUS_SUBDIVS = 4, AUTOFOCUS_DELAY=1000;
+
 int N_POLY_POINTS = 6;
 int N_COLOR_VAR = 5;
 int N_POS_VAR = 15;

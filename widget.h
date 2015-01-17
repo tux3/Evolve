@@ -24,6 +24,7 @@ public:
     explicit Widget();
     ~Widget();
     static quint64 computeFitness(const QImage& target);
+    static QRect computeAutofocusFitness(const QImage& target);
     Poly genPoly(); // Creates a new random polygon
     QImage predraw(int polyIndex);
     static void redraw(QImage& target, QVector<Poly>& polyList = polys);
@@ -40,6 +41,7 @@ public:
     void tryAddPoly(); // Will gen one poly and add it to generated only if it improves fitness
     static void removePoly(QVector<Poly>&, QImage& target); // Will remove a poly, without testing if it improves fitness
     static void reorderPoly(QVector<Poly>&, QImage& target); // Will change the zorder of a poly, without testing if it improves fitness
+    static void setAutofocus(bool enabled, int delay);
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -57,6 +59,7 @@ private slots:
     void githubClicked();
     void focusClicked();
     void redrawClicked();
+    void autofocusClicked();
     
 private:
     Ui::Widget *ui;
@@ -69,6 +72,7 @@ private:
     static unsigned height, width;
     quint64 fitness;
     int generation;
+    static QTimer autofocusTimer;
 };
 
 #endif // WIDGET_H

@@ -1,6 +1,9 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
+extern bool AUTOFOCUS_ENABLED;
+extern int AUTOFOCUS_SUBDIVS, AUTOFOCUS_DELAY;
+
 extern int N_POLY_POINTS;
 extern int N_COLOR_VAR;
 extern int N_POS_VAR;
