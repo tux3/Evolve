@@ -10,7 +10,6 @@
 #include <QRgb>
 #include <QtConcurrent/QtConcurrent>
 #include <ctime>
-#include <QElapsedTimer>
 
 unsigned Widget::height;
 unsigned Widget::width;
@@ -67,9 +66,6 @@ Widget::~Widget()
 
 quint64 Widget::computeFitness(const QImage& target)
 {
-    QElapsedTimer timer;
-    timer.start();
-
     unsigned minx, maxx, miny, maxy;
     minx = miny = 0;
     maxx = width;
@@ -105,12 +101,6 @@ quint64 Widget::computeFitness(const QImage& target)
     quint64 fitness=0;
     for (int i=0; i < N_CORES; i++)
         fitness+=slices[i].result();
-
-    static quint64 elapsed=0, runs=0;
-    elapsed += timer.nsecsElapsed();
-    runs++;
-
-    qDebug() << "Fitness:" << elapsed/runs/1000;
 
     return fitness;
 }
@@ -188,10 +178,12 @@ void Widget::run()
         int polysSize = polys.size();
 
         // Lower the number of points progressively to get more details
-        if (polysSize == 25 && SettingsWidget::isDefaultConfig)
+        if (polysSize == 10 && SettingsWidget::isDefaultConfig)
             N_POLY_POINTS = 5;
-        else if (polysSize == 75 && SettingsWidget::isDefaultConfig)
+        else if (polysSize == 25 && SettingsWidget::isDefaultConfig)
             N_POLY_POINTS = 4;
+        else if (polysSize == 50 && SettingsWidget::isDefaultConfig)
+            N_POLY_POINTS = 3;
 
         // Always keep a minimum number of polys
         if (polysSize < POLYS_MIN && polysSize < POLYS_MAX)

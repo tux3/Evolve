@@ -24,6 +24,8 @@ SettingsWidget::SettingsWidget(QWidget *parent) :
     ui->shapeOptFreqSpin->setValue(SHAPE_OPT_FREQ);
     ui->guiRefreshSpin->setValue(GUI_REFRESH_RATE);
     ui->coreSpin->setValue(N_CORES);
+    ui->minPolySpin->setValue(POLYS_MIN);
+    ui->maxPolySpin->setValue(POLYS_MAX);
 }
 
 SettingsWidget::~SettingsWidget()
@@ -39,7 +41,8 @@ void SettingsWidget::cancelClicked()
 void SettingsWidget::okClicked()
 {
     if (ui->focusLeft->value() >= ui->focusRight->value()
-        || ui->focusTop->value() >= ui->focusBottom->value())
+        || ui->focusTop->value() >= ui->focusBottom->value()
+        || ui->minPolySpin->value() > ui->maxPolySpin->value())
     {
         QMessageBox::critical(this, "Error", "Invalid Focus settings");
         close();
@@ -58,5 +61,7 @@ void SettingsWidget::okClicked()
     SHAPE_OPT_FREQ = ui->shapeOptFreqSpin->value();
     GUI_REFRESH_RATE = ui->guiRefreshSpin->value();
     N_CORES = ui->coreSpin->value();
+    POLYS_MIN = ui->minPolySpin->value();
+    POLYS_MAX = ui->maxPolySpin->value();
     close();
 }
