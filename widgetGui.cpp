@@ -97,7 +97,21 @@ void Widget::saveImageClicked()
                                                     "Images (*.png *.jpg)");
     if (fileName.isEmpty())
         return;
-    generated.save(fileName);
+
+    QImage image(width, height, QImage::Format_ARGB32);
+    QBrush brush(Qt::SolidPattern);
+    image.fill(Qt::white);
+    QPainter painter(&image);
+    painter.setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
+    painter.setPen(QPen(Qt::NoPen));
+    for (Poly& poly : polys)
+    {
+        brush.setColor(poly.color);
+        painter.setBrush(brush);
+        painter.drawPolygon(poly.points.data(), poly.points.size());
+    }
+
+    image.save(fileName);
 }
 
 void Widget::importDnaClicked()
