@@ -21,7 +21,6 @@ public:
 public:
     QVector<QPoint> points;
     QColor color;
-    int resizeTimes=0;
 };
 
 QDataStream& operator<< (QDataStream& stream, const Poly& poly);

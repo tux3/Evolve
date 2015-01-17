@@ -1,5 +1,6 @@
 #include "widget.h"
 #include "ui_widget.h"
+#include <QDebug>
 
 void Widget::tryAddPoly()
 {
@@ -19,6 +20,8 @@ void Widget::tryAddPoly()
         optimizeColors(polyPos, predrawn);
         optimizeShape(polyPos, predrawn);
         fitness = computeFitness(generated);
+
+        qDebug()<<"New poly:"<<polys[polyPos].points;
 
         // Update GUI
         ui->imgBest->setPixmap(QPixmap::fromImage(generated));

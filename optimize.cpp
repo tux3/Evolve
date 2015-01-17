@@ -3,6 +3,7 @@
 #include "settings.h"
 #include <QPainter>
 #include <QPen>
+#include <QDebug>
 
 using namespace std;
 
@@ -71,7 +72,7 @@ void Widget::optimizeColors(int polyIndex, QImage& predrawn)
     int targetColor;
     for (targetColor=0; targetColor <= 8; targetColor++)
     {
-        do
+        for(;;)
         {
             if (processEventsRatelimit == GUI_REFRESH_RATE) // processEvents is a massive slowdown
             {
@@ -80,7 +81,7 @@ void Widget::optimizeColors(int polyIndex, QImage& predrawn)
             }
             else
                 processEventsRatelimit++;
-            QColor color = poly.color;
+            QColor color = poly.color, oldcolor=poly.color;
             if (targetColor == 0)
                 color = color.lighter(110); // Lighter
             else if (targetColor == 1)
@@ -102,8 +103,15 @@ void Widget::optimizeColors(int polyIndex, QImage& predrawn)
             else if (targetColor == 9 && OPT_INCREASE_ALPHA)
                 color.setAlpha(min(color.alpha()+N_COLOR_VAR,255)); // More alpha
             poly.color = color;
-        } while (validate());
+            if (!validate())
+            {
+                poly.color = oldcolor;
+                break;
+            }
+        }
     }
+    generated = predrawn;
+    Poly::drawPoly(generated, poly);
     app->processEvents();
 }
 
@@ -158,7 +166,7 @@ void Widget::optimizeShape(int polyIndex, QImage& predrawn)
         int direction;
         for (direction=0; direction<4; direction++)
         {
-            do
+            for(;;)
             {
                 if (processEventsRatelimit == GUI_REFRESH_RATE) // processEvents is a massive slowdown
                 {
@@ -169,15 +177,57 @@ void Widget::optimizeShape(int polyIndex, QImage& predrawn)
                     processEventsRatelimit++;
 
                 if (direction==0)
-                    point.setY(max(point.y()-N_POS_VAR,0));
+                {
+                    int oldy = point.y();
+                    point.setY(max(oldy-N_POS_VAR,0));
+                    if (!validate())
+                    {
+                        point.setY(oldy);
+                        break;
+                    }
+                    else if (point.y()==0)
+                        break;
+                }
                 else if (direction==1)
-                    point.setX(min((unsigned)point.x()+N_POS_VAR, width));
+                {
+                    int oldx = point.x();
+                    point.setX(min((unsigned)oldx+N_POS_VAR, width));
+                    if (!validate())
+                    {
+                        point.setX(oldx);
+                        break;
+                    }
+                    else if (point.x()==(int)width)
+                        break;
+                }
                 else if (direction==2)
-                    point.setY(min((unsigned)point.y()+N_POS_VAR, height));
+                {
+                    int oldy = point.y();
+                    point.setY(min((unsigned)oldy+N_POS_VAR, height));
+                    if (!validate())
+                    {
+                        point.setY(oldy);
+                        break;
+                    }
+                    else if (point.y()==(int)height)
+                        break;
+                }
                 else if (direction==3)
-                    point.setX(max(point.x()-N_POS_VAR,0));
-            } while (validate());
+                {
+                    int oldx = point.x();
+                    point.setX(max(oldx-N_POS_VAR,0));
+                    if (!validate())
+                    {
+                        point.setX(oldx);
+                        break;
+                    }
+                    else if (point.x()==0)
+                        break;
+                }
+            }
         }
     }
+    generated = predrawn;
+    Poly::drawPoly(generated, poly);
     app->processEvents();
 }

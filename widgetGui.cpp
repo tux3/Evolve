@@ -100,6 +100,12 @@ void Widget::importDnaClicked()
     ui->imgBest->setPixmap(QPixmap::fromImage(generated));
 }
 
+void Widget::redrawClicked()
+{
+    redraw2(generated);
+    ui->imgBest->setPixmap(QPixmap::fromImage(generated));
+}
+
 void Widget::exportDnaClicked()
 {
     QString fileName = QFileDialog::getSaveFileName(this, tr("Export DNA"),"",
@@ -107,7 +113,7 @@ void Widget::exportDnaClicked()
     if (fileName.isEmpty())
         return;
     QFile file(fileName);
-    file.open(QIODevice::WriteOnly);
+    file.open(QIODevice::WriteOnly | QIODevice::Truncate);
     QDataStream out(&file);
     out.setVersion(QDataStream::Qt_4_0);
     out << generation;
@@ -115,6 +121,8 @@ void Widget::exportDnaClicked()
     out << height;
     out << polys;
     file.close();
+
+    redraw(generated);
 }
 
 void Widget::saveSVGClicked()

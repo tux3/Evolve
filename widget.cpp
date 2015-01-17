@@ -42,6 +42,7 @@ Widget::Widget() :
     settingsMenu->addAction("&Settings", this, SLOT(settingsClicked()));
     QMenu* helpMenu = menuBar->addMenu(tr("&?"));
     helpMenu->addAction("&Focus", this, SLOT(focusClicked()));
+    helpMenu->addAction("&Redraw", this, SLOT(redrawClicked()));
     helpMenu->addAction("&GitHub page", this, SLOT(githubClicked()));
     ui->gridLayout->addWidget(menuBar,0,0,1,4);
     menuBar->setFixedHeight(22);
@@ -150,7 +151,6 @@ Poly Widget::genPoly()
     avgy /= N_POLY_POINTS;
 
     poly.color = pic.pixel(avgx,avgy);
-    //poly.color = pic.pixel(avgx,avgy);
     poly.color.setAlpha(qrand()%180+20);
 #endif
     return poly;
@@ -167,6 +167,16 @@ void Widget::redraw(QImage& target, QVector<Poly> &polyList)
         brush.setColor(poly.color);
         painter.setBrush(brush);
         painter.drawPolygon(poly.points.data(), poly.points.size());
+    }
+}
+
+void Widget::redraw2(QImage& target, QVector<Poly> &polyList)
+{
+    static QBrush brush(Qt::SolidPattern);
+    target.fill(Qt::white);
+    for (Poly& poly : polyList)
+    {
+        Poly::drawPoly(target, poly);
     }
 }
 
