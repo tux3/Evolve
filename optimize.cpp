@@ -149,7 +149,6 @@ void Widget::optimizeShape(int polyIndex, QImage& predrawn)
             return false;
     };
 
-    app->processEvents();
     int processEventsRatelimit = 0;
     for (QPoint& point : poly.points)
     {

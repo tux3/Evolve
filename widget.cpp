@@ -64,31 +64,15 @@ Widget::~Widget()
     exit(0);
 }
 
-quint64 Widget::computeFitness(const QImage& target, const QRect box)
+quint64 Widget::computeFitness(const QImage& target)
 {
     unsigned minx, maxx, miny, maxy;
-    if (box.isNull())
-    {
-        minx = miny = 0;
-        maxx = width;
-        maxy = height;
-    }
-    else
-    {
-        minx = box.x();
-        miny = box.y();
-        maxx = minx + box.width();
-        maxy = miny + box.height();
-    }
+    minx = miny = 0;
+    maxx = width;
+    maxy = height;
 
-    static QVector<QRgb*> originalLines;
-    originalLines.resize(maxy-miny);
-    for (unsigned i=miny; i<maxy; i++)
-        originalLines[i] = ((QRgb*)pic.scanLine(i));
-    static QVector<QRgb*> targetLines;
-    targetLines.resize(maxy-miny);
-    for (unsigned i=miny; i<maxy; i++)
-        targetLines[i] = ((QRgb*)target.scanLine(i));
+    const uchar* origData = pic.bits(), *targetData = target.bits();
+    const unsigned origPL = pic.bytesPerLine()/4, targetPL = target.bytesPerLine()/4;
 
     auto computeSlice = [&](const unsigned start, const unsigned end)
     {
@@ -98,9 +82,9 @@ quint64 Widget::computeFitness(const QImage& target, const QRect box)
             // Sum of the differences of each pixel's color
             for (unsigned j=minx; j<maxx; j++)
             {
-                unsigned ocolor = originalLines.at(i)[j];
+                unsigned ocolor = origData[origPL*i+j];
                 int oR=(ocolor>>16), oG=(ocolor>>8)&0xFF, oB=(ocolor&0xFF);
-                unsigned tcolor = targetLines.at(i)[j];
+                unsigned tcolor = targetData[targetPL*i+j];
                 int tR=(tcolor>>16), tG=(tcolor>>8)&0xFF, tB=(tcolor&0xFF);
                 partFitness += abs(tR-oR)+abs(tG-oG)+abs(tB-oB);
             }
@@ -114,6 +98,7 @@ quint64 Widget::computeFitness(const QImage& target, const QRect box)
     quint64 fitness=0;
     for (int i=0; i < N_CORES; i++)
         fitness+=slices[i].result();
+
     return fitness;
 }
 

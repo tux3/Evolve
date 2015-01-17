@@ -4,7 +4,7 @@ int N_POLY_POINTS = 6;
 int N_COLOR_VAR = 5;
 int N_POS_VAR = 10;
 int SHAPE_OPT_FREQ = 0;
-int GUI_REFRESH_RATE = 1;
+int GUI_REFRESH_RATE = 2;
 int AUTOFOCUS_RES = 2;
 int N_CORES = 4;
 
