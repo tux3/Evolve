@@ -192,7 +192,7 @@ quint64 Widget::computeFitness(const QImage& target)
 
 QImage Widget::predraw(int polyIndex)
 {
-    QImage predrawn(width, height, QImage::Format_ARGB32);
+    QImage predrawn(width, height, QImage::Format_RGB32);
     predrawn.fill(Qt::white);
     static QBrush brush(Qt::SolidPattern);
     QPainter painter(&predrawn);

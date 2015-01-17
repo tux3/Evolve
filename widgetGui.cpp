@@ -73,7 +73,7 @@ void Widget::openImageClicked()
     height = pic.height();
 
     // Create a blank pic the size of the original
-    generated = QImage(width, height, QImage::Format_ARGB32);
+    generated = QImage(width, height, QImage::Format_RGB32);
     generated.fill(QColor(255,255,255));
     ui->imgBest->setPixmap(QPixmap::fromImage(generated));
 
@@ -98,7 +98,7 @@ void Widget::saveImageClicked()
     if (fileName.isEmpty())
         return;
 
-    QImage image(width, height, QImage::Format_ARGB32);
+    QImage image(width, height, QImage::Format_RGB32);
     QBrush brush(Qt::SolidPattern);
     image.fill(Qt::white);
     QPainter painter(&image);
@@ -209,7 +209,7 @@ void Widget::settingsClicked()
 
 void Widget::updateGuiFitness()
 {
-    quint64 worstFitness = width*height*3*255;
+    quint64 worstFitness = (quint64)width*height*3*255;
     float percentFitness = 100.0-((double)fitness/(double)worstFitness*100.0);
     ui->fitnessLabel->setNum(percentFitness);
     ui->fitnessLabel->setText(ui->fitnessLabel->text()+'%');
