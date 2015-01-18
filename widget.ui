@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Evolution Vectorizer 1.3 alpha</string>
+   <string>Evolution Vectorizer 1.3</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <property name="leftMargin">
