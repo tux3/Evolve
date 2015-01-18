@@ -234,7 +234,23 @@ Poly Widget::genPoly()
     avgx /= N_POLY_POINTS;
     avgy /= N_POLY_POINTS;
 
-    poly.color = pic.pixel(avgx,avgy);
+    if (avgx>0&&avgx<width
+        &&avgy>0&&avgy<height)
+    {
+        QColor t,b,l,r,c;
+        t = pic.pixel(avgx,avgy-1);
+        b = pic.pixel(avgx,avgy+1);
+        l = pic.pixel(avgx-1,avgy);
+        r = pic.pixel(avgx+1,avgy);
+        c = pic.pixel(avgx,avgy);
+        poly.color = QColor((t.red()+b.red()+l.red()+r.red()+c.red())/5,
+                            (t.green()+b.green()+l.green()+r.green()+c.green())/5,
+                            (t.blue()+b.blue()+l.blue()+r.blue()+c.blue())/5);
+    }
+    else
+    {
+        poly.color = pic.pixel(avgx,avgy);
+    }
     poly.color.setAlpha(qrand()%180+20);
 #endif
     return poly;
