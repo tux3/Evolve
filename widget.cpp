@@ -2,6 +2,7 @@
 #include "ui_widget.h"
 #include "settings.h"
 #include "settingswidget.h"
+#include "analysis.h"
 #include <QDataStream>
 #include <QString>
 #include <QPixmap>
@@ -110,9 +111,9 @@ QRect Widget::computeAutofocusFitness(const QImage& target)
             for (unsigned j=minx; j<maxx; j++)
             {
                 unsigned ocolor = originalLines.at(i)[j];
-                int oR=(ocolor>>16), oG=(ocolor>>8)&0xFF, oB=(ocolor&0xFF);
+                int oR=(ocolor>>16)&0xFF, oG=(ocolor>>8)&0xFF, oB=(ocolor&0xFF);
                 unsigned tcolor = targetLines.at(i)[j];
-                int tR=(tcolor>>16), tG=(tcolor>>8)&0xFF, tB=(tcolor&0xFF);
+                int tR=(tcolor>>16)&0xFF, tG=(tcolor>>8)&0xFF, tB=(tcolor&0xFF);
                 partFitness += abs(tR-oR)+abs(tG-oG)+abs(tB-oB);
             }
         }
@@ -276,6 +277,21 @@ void Widget::run()
     while (running)
     {
         int polysSize = polys.size();
+
+        if (!polysSize)
+        {
+            QColor bg = findDominantColor(pic);
+            Poly poly;
+            poly.color = bg;
+            poly.points.append(QPoint(0, 0));
+            poly.points.append(QPoint(width, 0));
+            poly.points.append(QPoint(width, height));
+            poly.points.append(QPoint(0, height));
+            polys.append(poly);
+            Poly::drawPoly(generated, poly);
+            ui->imgBest->setPixmap(QPixmap::fromImage(generated));
+            ui->polysLabel->setNum(1);
+        }
 
         // Lower the number of points progressively to get more details
         if (polysSize == 10 && SettingsWidget::isDefaultConfig)
