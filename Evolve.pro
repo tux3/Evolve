@@ -34,8 +34,6 @@ FORMS    += widget.ui \
     progressdialog.ui \
     settingswidget.ui
 
-CONFIG += c++11
-
-QMAKE_CXXFLAGS_RELEASE += -O3 -flto -march=native -mmmx # Crashes on some computers
-QMAKE_CXXFLAGS_DEBUG += -Og -g -march=native -mmmx # Crashes on some computers
+QMAKE_CXXFLAGS_RELEASE += -std=c++11 -O3 -flto -march=native -mmmx # Crashes on some computers
+QMAKE_CXXFLAGS_DEBUG += -std=c++11 -Og -g -march=native -mmmx # Crashes on some computers
 #QMAKE_CXXFLAGS_DEBUG += -Og
