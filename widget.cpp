@@ -11,6 +11,8 @@
 #include <QRgb>
 #include <QtConcurrent/QtConcurrent>
 #include <ctime>
+#include <mmintrin.h>
+#include <xmmintrin.h>
 
 //#define TIME_FITNESS
 
