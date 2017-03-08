@@ -66,7 +66,7 @@ void Widget::reorderPoly(QVector<Poly>& newPolys, QImage &target)
             break;
     }
     int dest = qrand()%newPolys.size();
-    Poly poly = newPolys.takeAt(source);
+    Poly poly = newPolys.at(source);
     newPolys.insert(dest, poly);
     redraw(target, newPolys);
     optimizeShape(dest, newPolys);

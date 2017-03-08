@@ -9,7 +9,8 @@
 #include <QPen>
 #include <QPainter>
 #include <QRgb>
-#include <QtConcurrent/QtConcurrent>
+#include <QtConcurrentRun>
+#include <QTimer>
 #include <ctime>
 #include <mmintrin.h>
 #include <xmmintrin.h>
